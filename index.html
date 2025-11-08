@@ -1,53 +1,72 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ClassicVapes</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <!-- Preloader -->
-  <div id="preloader">
-    <img src="images/logo.png" alt="Logo">
-  </div>
+  <!-- HEADER -->
+  <header class="site-header">
+    <a class="brand" href="index.html">
+      <img src="images/logo.png" alt="ClassicVapes" class="logo">
+    </a>
 
-  <!-- Header -->
-  <header>
-    <a href="index.html"><img src="images/logo.png" class="logo" alt="Logo"></a>
-    <nav>
+    <div class="header-actions">
+      <button class="cart-btn" onclick="toggleCart()" aria-label="Cart">🛒 <span id="cart-count">0</span></button>
+      <button class="hamburger" aria-label="Menu" onclick="document.body.classList.toggle('nav-open')">☰</button>
+    </div>
+
+    <nav class="main-nav" role="navigation">
       <a href="index.html">Home</a>
       <a href="products.html">Products</a>
       <a href="checkout.html">Checkout</a>
-      <button class="view-cart-btn" onclick="toggleCart()">🛒 Cart (<span id="cart-count">0</span>)</button>
     </nav>
   </header>
 
-  <!-- Hero Slider -->
-  <section class="hero-slider" id="hero-slider">
-    <div class="slide"><img src="images/hero1.jpg" alt=""></div>
-    <div class="slide"><img src="images/hero2.jpg" alt=""></div>
-    <div class="slide"><img src="images/hero3.jpg" alt=""></div>
-    <button class="shop-btn" onclick="window.location.href='products.html'">Shop Now</button>
+  <!-- HERO -->
+  <section class="hero-slider" id="hero-slider" aria-label="Promotions">
+    <div class="slides">
+      <div class="slide"><img src="https://i.ibb.co/VWNgVPKc/hero1.webp" alt="Hero 1" loading="lazy"></div>
+      <div class="slide"><img src="https://i.ibb.co/zML9WG1/hero2.jpg" alt="Hero 2" loading="lazy"></div>
+      <div class="slide"><img src="https://i.ibb.co/XZJ23Qt6/hero4.webp" alt="Hero 3" loading="lazy"></div>
+    </div>
+
+    <div class="hero-overlay">
+      <h1>Style. Scent. Spark.</h1>
+      <p>Discover premium lifestyle products designed with elegance.</p>
+      <button class="shop-btn" onclick="location.href='products.html'">Shop Now</button>
+    </div>
+
+    <div class="hero-dots" id="hero-dots" aria-hidden="false"></div>
   </section>
 
-  <!-- Featured Products -->
-  <section class="featured-products" id="featured-products">
-    <!-- JS will populate featured products -->
+  <!-- FEATURED -->
+  <section class="featured">
+    <h2 class="section-title">Featured Products</h2>
+
+    <div class="featured-wrap">
+      <div id="featured-carousel" class="featured-carousel" tabindex="0" aria-label="Featured products carousel"></div>
+    </div>
   </section>
 
-  <!-- Cart Popup -->
-  <div class="cart" id="cart">
+  <!-- CART POPUP (shared) -->
+  <div class="cart" id="cart" aria-hidden="true">
     <h3>Your Cart</h3>
     <div id="cart-items"></div>
-    <p class="cart-total">Total: ₹<span id="total">0</span></p>
-    <button class="checkout-btn" onclick="window.location.href='checkout.html'">Checkout</button>
+    <p class="cart-total">Total: ₹<span id="cart-total">0</span></p>
+    <button class="checkout-btn" onclick="location.href='checkout.html'">Checkout</button>
   </div>
 
-  <footer>
+  <footer class="site-footer">
     Contact us: classicvapes@gmail.com | Instagram: @classicvapes
   </footer>
 
-  <script src="js/home.js"></script>
+  <!-- SCRIPTS -->
+  <script src="js/cart.js" defer></script> <!-- keep your shared cart logic here -->
+  <script src="js/home.js" defer></script>
 </body>
 </html>
