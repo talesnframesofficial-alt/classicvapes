@@ -1,0 +1,315 @@
+/* ---------------- Global Styles ---------------- */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #fff;
+  color: #111;
+  overflow-x: hidden;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  outline: none;
+}
+
+/* ---------------- Preloader ---------------- */
+#preloader {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  transition: opacity 0.5s;
+}
+
+#preloader img {
+  width: 100px;
+  animation: rotateLogo 2s linear infinite;
+}
+
+@keyframes rotateLogo {
+  0% { transform: rotate(0deg);}
+  100% { transform: rotate(360deg);}
+}
+
+/* ---------------- Header ---------------- */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 60px;
+  border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 100;
+}
+
+header img.logo {
+  height: 50px;
+}
+
+nav a, .view-cart-btn {
+  margin-left: 30px;
+  font-weight: 500;
+  border: none;
+  background: none;
+  font-size: 1rem;
+}
+
+.view-cart-btn:hover {
+  color: #0071e3;
+}
+
+/* ---------------- Hero Section ---------------- */
+.hero {
+  position: relative;
+  height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hero-slides img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  left:0;
+  top:0;
+  opacity:0;
+  transition: opacity 1s ease-in-out;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: #fff;
+}
+
+.hero h2 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  color: #eee;
+}
+
+/* ---------------- Shop Now Button ---------------- */
+.shop-now-btn {
+  background: linear-gradient(135deg,#ff7e5f,#feb47b);
+  border: none;
+  padding: 12px 28px;
+  border-radius: 30px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.shop-now-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+}
+
+/* ---------------- Featured Products ---------------- */
+.featured-products {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+  padding: 50px 20px;
+}
+
+.featured-card {
+  width: 200px;
+  text-align: center;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  padding: 15px;
+  transition: transform 0.3s, box-shadow 0.3s;
+  background: #fff;
+}
+
+.featured-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+.featured-card img {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.featured-card h3 {
+  font-size: 1rem;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.featured-card p {
+  font-size: 0.9rem;
+  color: #777;
+  margin-bottom: 10px;
+}
+
+.featured-card .original-price {
+  text-decoration: line-through;
+  color: #aaa;
+  margin-right: 5px;
+}
+
+.featured-card .offer-price {
+  font-weight: 600;
+  color: #111;
+}
+
+/* ---------------- View Button (Canva style) ---------------- */
+.view-btn {
+  background: linear-gradient(135deg,#6a11cb,#2575fc);
+  border: none;
+  padding: 8px 18px;
+  border-radius: 25px;
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.view-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+}
+
+/* ---------------- Product Popup ---------------- */
+.product-popup {
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+}
+
+.product-popup .popup-content {
+  width: 400px;
+  max-width: 90%;
+  background: #fff;
+  padding: 25px;
+  border-radius: 15px;
+  position: relative;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.product-popup img {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+.popup-content h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.popup-content .popup-price {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.popup-content .popup-price .original-price {
+  text-decoration: line-through;
+  font-weight: 400;
+  color: #aaa;
+  margin-left:5px;
+}
+
+.popup-content .popup-desc {
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+  color:#555;
+}
+
+.popup-content .variants {
+  margin-bottom: 15px;
+}
+
+.variant-btn {
+  background:#eee;
+  border:none;
+  padding:6px 12px;
+  margin:3px;
+  border-radius:20px;
+  cursor:pointer;
+  transition: all 0.2s;
+}
+.variant-btn.selected {
+  background:linear-gradient(135deg,#6a11cb,#2575fc);
+  color:#fff;
+}
+
+/* Popup Close Button */
+.close-btn {
+  position: absolute;
+  top:10px; right:10px;
+  background:#fff;
+  border:none;
+  font-size:1.5rem;
+  font-weight:bold;
+  cursor:pointer;
+  border-radius:50%;
+  width:32px; height:32px;
+  line-height:32px;
+  text-align:center;
+  box-shadow:0 4px 12px rgba(0,0,0,0.2);
+}
+.close-btn:hover {
+  background:#f2f2f2;
+}
+
+/* ---------------- Cart Button ---------------- */
+.added {
+  animation: pop 0.3s forwards;
+}
+
+@keyframes pop {
+  0% {transform: scale(1);}
+  50% {transform: scale(1.2);}
+  100% {transform: scale(1);}
+}
+
+/* ---------------- Footer ---------------- */
+footer {
+  text-align: center;
+  padding: 40px;
+  font-size: 0.9rem;
+  color: #777;
+  border-top: 1px solid #eee;
+}
+
+/* ---------------- Misc ---------------- */
+input, select {
+  padding:8px;
+  border-radius:5px;
+  border:1px solid #ccc;
+  margin-bottom:10px;
+  width:100%;
+  box-sizing:border-box;
+}

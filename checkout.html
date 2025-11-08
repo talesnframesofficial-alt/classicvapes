@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout - Classic Vapes</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/checkout.css" />
+</head>
+<body>
+  <!-- Loader -->
+  <div id="preloader">
+    <img src="images/logo.png" alt="Loading..." />
+  </div>
+
+  <!-- Header -->
+  <header>
+    <a href="index.html"><img src="images/logo.png" alt="Logo" class="logo" /></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="products.html">Products</a>
+    </nav>
+  </header>
+
+  <section class="checkout-wrapper">
+    <h1>Checkout</h1>
+
+    <div class="checkout-container">
+      <!-- Left: Customer Info -->
+      <div class="checkout-left">
+        <h2>Customer Information</h2>
+        <form id="checkout-form">
+          <label>Full Name</label>
+          <input type="text" id="name" required>
+
+          <label>Email</label>
+          <input type="email" id="email" required>
+
+          <label>Phone</label>
+          <input type="tel" id="phone" required>
+
+          <label>Address</label>
+          <textarea id="address" required></textarea>
+
+          <label>City</label>
+          <input type="text" id="city" required>
+
+          <label>State</label>
+          <input type="text" id="state" required>
+
+          <label>Pincode</label>
+          <input type="text" id="pincode" required>
+
+          <label>Payment Method</label>
+          <select id="payment" required>
+            <option value="UPI">UPI</option>
+            <option value="COD">Cash on Delivery</option>
+          </select>
+        </form>
+      </div>
+
+      <!-- Right: Order Summary -->
+      <div class="checkout-right">
+        <h2>Order Summary</h2>
+        <div id="order-items"></div>
+        <p class="total-line">Total: <strong id="order-total">₹0.00</strong></p>
+        <button id="place-order" class="checkout-btn">Place Order</button>
+        <p id="order-msg"></p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2025 Classic Vapes. All rights reserved.</p>
+  </footer>
+
+  <script src="js/checkout.js"></script>
+</body>
+</html>

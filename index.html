@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClassicVapes</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Preloader -->
+  <div id="preloader">
+    <img src="images/logo.png" alt="Logo">
+  </div>
+
+  <!-- Header -->
+  <header>
+    <a href="index.html"><img src="images/logo.png" class="logo" alt="Logo"></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="products.html">Products</a>
+      <a href="checkout.html">Checkout</a>
+      <button class="view-cart-btn" onclick="toggleCart()">🛒 Cart (<span id="cart-count">0</span>)</button>
+    </nav>
+  </header>
+
+  <!-- Hero Slider -->
+  <section class="hero-slider" id="hero-slider">
+    <div class="slide"><img src="images/hero1.jpg" alt=""></div>
+    <div class="slide"><img src="images/hero2.jpg" alt=""></div>
+    <div class="slide"><img src="images/hero3.jpg" alt=""></div>
+    <button class="shop-btn" onclick="window.location.href='products.html'">Shop Now</button>
+  </section>
+
+  <!-- Featured Products -->
+  <section class="featured-products" id="featured-products">
+    <!-- JS will populate featured products -->
+  </section>
+
+  <!-- Cart Popup -->
+  <div class="cart" id="cart">
+    <h3>Your Cart</h3>
+    <div id="cart-items"></div>
+    <p class="cart-total">Total: ₹<span id="total">0</span></p>
+    <button class="checkout-btn" onclick="window.location.href='checkout.html'">Checkout</button>
+  </div>
+
+  <footer>
+    Contact us: classicvapes@gmail.com | Instagram: @classicvapes
+  </footer>
+
+  <script src="js/home.js"></script>
+</body>
+</html>
