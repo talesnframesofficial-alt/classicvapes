@@ -1,7 +1,7 @@
 /* js/products.js */
 const CSV_URL_PRODUCTS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT15M2LZhCAW1EXXp1oRB9oFn5Enj2DvuReH7tlPPlq3rkSffsRy12r09TsmCLgapn4jG01U9bcv6-2/pub?output=csv";
 function el(t,c){const e=document.createElement(t); if(c) e.className=c; return e;}
-function csvToJson(csv){ if(!csv) return []; const lines = csv.trim().split(/\r?\n/); const headers = lines.shift().split(",").map(h=>h.trim()); return lines.map(line=>{ const cols=line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,"").trim()); const obj={}; headers.forEach((h,i)=> obj[h]=cols[i]!==undefined?cols[i]:""); return obj; }); }
+function csvToJson(csv){ if(!csv) return []; const lines = csv.trim().split(/\r?\n/); const headers = lines.shift().split(",").map(h=>h.trim()); return lines.map(line=>{ const cols=line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,"").trim()); const obj = {}; headers.forEach((h,i)=> obj[h]=cols[i]!==undefined?cols[i]:""); return obj; }); }
 
 async function fetchAllProducts(){
   try{
@@ -24,20 +24,23 @@ async function fetchAllProducts(){
 
 async function renderProducts(){
   const products = await fetchAllProducts();
-  // insert search bar
+
+  // ensure search bar exists above products grid
   let searchWrap = document.querySelector(".search-wrap");
   if(!searchWrap){
     searchWrap = el("div","search-wrap");
-    const input = el("input"); input.id="search-input"; input.placeholder = "Search products..."; input.type="search";
+    const input = el("input"); input.id = "search-input"; input.placeholder = "Search products..."; input.type = "search";
     searchWrap.appendChild(input);
     const main = document.querySelector("main") || document.body;
     main.insertBefore(searchWrap, main.firstChild);
   }
+
   const grid = document.getElementById("products-grid");
   if(!grid){
-    console.warn("No #products-grid found");
+    console.warn("No #products-grid found in DOM");
     return;
   }
+
   function draw(list){
     grid.innerHTML = "";
     list.forEach(p => {
@@ -59,19 +62,17 @@ async function renderProducts(){
       const view = el("button","view-btn"); view.innerText="View";
       const add = el("button","buy-btn"); add.innerText="Add";
       actions.appendChild(view); actions.appendChild(add);
-
       card.appendChild(title); card.appendChild(desc); card.appendChild(priceRow); card.appendChild(actions);
 
       card.addEventListener("click", (e)=> {
-        if(e.target === add){ window.addToCart && window.addToCart({ id:p.id, name:p.name, price:final, qty:1, image:p.image || 'images/logo.png' }); (window.showToast||(()=>{}))("Added to cart"); return; }
-        showProductPopup && showProductPopup(p);
+        if(e.target === add){ const finalP = p.offer && p.offer>0 ? p.offer : p.mrp; window.addToCart && window.addToCart({ id:p.id, name:p.name, price:finalP, qty:1, image:p.image || 'images/logo.png' }); (window.showToast||(()=>{}))("Added to cart"); return; }
+        window.showProductPopup && window.showProductPopup(p);
       });
 
       grid.appendChild(card);
     });
   }
 
-  // initial draw
   draw(products);
 
   // search behavior
