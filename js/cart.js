@@ -1,82 +1,71 @@
-document.addEventListener("DOMContentLoaded", function() {
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+/* ===== SAFE CART WITH NO ERRORS ===== */
 
-  // Show product popup
-  window.viewProduct = function(product) {
-    const popup = document.createElement('div');
-    popup.className = 'product-popup';
-    popup.innerHTML = `
-      <div class="popup-content">
-        <button class="close-btn" onclick="document.body.removeChild(this.parentElement.parentElement)">×</button>
-        <img src="${product.img}" alt="${product.name}">
-        <h3>${product.name}</h3>
-        <p>${product.description || ''}</p>
-        <p>₹${product.price}</p>
-        <div class="variants">
-          ${product.variants ? product.variants.map((v, i) => `<button class="variant-btn" onclick="selectVariant(this)">${v}</button>`).join('') : ''}
-        </div>
-        <button class="buy-btn" onclick="addToCart('${product.name}', ${product.price}, selectedVariant)">Add to Cart</button>
-      </div>
-    `;
-    document.body.appendChild(popup);
-    window.selectedVariant = product.variants ? product.variants[0] : null;
+let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+function saveCart(){
+  localStorage.setItem("cart", JSON.stringify(cart));
+}
+
+function addToCart(item){
+  const found = cart.find(x => x.id === item.id);
+  if(found){
+    found.qty += 1;
+  } else {
+    cart.push({...item, qty:1});
   }
+  saveCart();
+  updateCartUI();
+  showToast("Added to cart ✅");
+}
 
-  window.selectVariant = function(btn) {
-    document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    window.selectedVariant = btn.innerText;
+function removeCart(id){
+  cart = cart.filter(x => x.id !== id);
+  saveCart();
+  updateCartUI();
+}
+
+function updateCartUI(){
+  const box = document.getElementById("cart-items");
+  const count = document.getElementById("cart-count");
+  const totalUI = document.getElementById("total");
+
+  if(!box) return;
+  box.innerHTML = "";
+
+  let total = 0;
+  cart.forEach(p => {
+    total += p.price * p.qty;
+    box.innerHTML += `
+      <div class="cart-item">
+        <span>${p.name} × ${p.qty}</span>
+        <span>₹${p.price * p.qty}</span>
+        <button onclick="removeCart('${p.id}')">✕</button>
+      </div>`;
+  });
+
+  if(count) count.innerText = cart.length;
+  if(totalUI) totalUI.innerText = total;
+}
+
+function toggleCart(){
+  const c = document.getElementById("cart");
+  if(c) c.style.display = c.style.display === "block" ? "none" : "block";
+}
+
+function showToast(msg){
+  let t = document.getElementById("toast");
+  if(!t){
+    t = document.createElement("div");
+    t.id="toast";
+    document.body.appendChild(t);
   }
+  t.textContent = msg;
+  t.style.display="block";
+  setTimeout(()=>t.style.display="none",2000);
+}
 
-  // Add to cart
-  window.addToCart = function(name, price, variant = null) {
-    const existing = cart.find(item => item.name === name && item.variant === variant);
-    if(existing) existing.qty++;
-    else cart.push({ name, price, qty:1, variant });
-    updateCart();
-    alert(`${name} ${variant ? '('+variant+')' : ''} added to cart!`);
-  }
-
-  // Remove item
-  window.removeItem = function(index) {
-    cart.splice(index,1);
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCart();
-  }
-
-  // Update cart UI
-  function updateCart() {
-    localStorage.setItem('cart', JSON.stringify(cart));
-    const cartCount = document.getElementById('cart-count');
-    if(cartCount) cartCount.innerText = cart.reduce((a,b)=>a+b.qty,0);
-
-    const cartItemsDiv = document.getElementById('cart-items');
-    if(cartItemsDiv) {
-      cartItemsDiv.innerHTML = '';
-      let total = 0;
-      cart.forEach((item,i) => {
-        total += item.price * item.qty;
-        cartItemsDiv.innerHTML += `
-          <div class="cart-item">
-            <span>${item.name}${item.variant ? ' ('+item.variant+')' : ''} x${item.qty}</span>
-            <span>₹${item.price*item.qty}</span>
-            <button class="remove-btn" onclick="removeItem(${i})">&times;</button>
-          </div>
-        `;
-      });
-      const totalSpan = document.getElementById('total');
-      if(totalSpan) totalSpan.innerText = total;
-    }
-  }
-
-  // Toggle cart visibility
-  window.toggleCart = function() {
-    const cartDiv = document.getElementById('cart');
-    if(cartDiv) {
-      cartDiv.style.display = cartDiv.style.display === 'block' ? 'none' : 'block';
-    }
-    updateCart();
-  }
-
-  updateCart();
-});
+document.addEventListener("DOMContentLoaded", updateCartUI);
+window.addToCart = addToCart;
+window.removeCart = removeCart;
+window.toggleCart = toggleCart;
+window.showToast = showToast;
