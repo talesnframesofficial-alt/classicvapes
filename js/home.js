@@ -1,4 +1,4 @@
-/* js/home.js — featured carousel (mobile C, desktop E), hero, popup boot */
+/* js/home.js — fixed, no nested template literals, featured carousel (mobile C, desktop E), hero, popup */
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT15M2LZhCAW1EXXp1oRB9oFn5Enj2DvuReH7tlPPlq3rkSffsRy12r09TsmCLgapn4jG01U9bcv6-2/pub?output=csv";
 const AUTO_MS = 3000;
 const MOBILE_VIEW_BREAK = 900;
@@ -7,7 +7,18 @@ const DESKTOP_PER_VIEW = 4;
 const FEATURE_LIMIT = 12;
 
 function el(tag, cls){ const d = document.createElement(tag); if(cls) d.className = cls; return d; }
-function csvToJson(csv){ if(!csv) return []; const lines = csv.trim().split(/\r?\n/); const headers = lines.shift().split(",").map(h=>h.trim()); return lines.map(line=>{ const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,"").trim()); const obj={}; headers.forEach((h,i)=> obj[h] = cols[i] !== undefined ? cols[i] : ""); return obj; }); }
+
+function csvToJson(csv){
+  if(!csv) return [];
+  const lines = csv.trim().split(/\r?\n/);
+  const headers = lines.shift().split(",").map(h=>h.trim());
+  return lines.map(line=>{
+    const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,"").trim());
+    const obj = {};
+    headers.forEach((h,i)=> obj[h] = cols[i] !== undefined ? cols[i] : "");
+    return obj;
+  });
+}
 
 async function fetchProducts(){
   try{
@@ -25,7 +36,10 @@ async function fetchProducts(){
       featured: String(r.Featured || r.featured || "").toLowerCase().startsWith("y"),
       description: r.Description || r.description || ""
     }));
-  }catch(e){ console.error("fetchProducts error", e); return []; }
+  }catch(e){
+    console.error("fetchProducts error", e);
+    return [];
+  }
 }
 
 /* HERO */
@@ -34,9 +48,19 @@ function initHero(){
   if(!slides.length) return;
   let idx = 0;
   const dots = document.getElementById("hero-dots");
-  dots.innerHTML = "";
-  slides.forEach((_,i)=>{ const b = el("button","hero-dot"); b.onclick = ()=> go(i); dots.appendChild(b); });
-  function show(i){ slides.forEach(s=> s.style.display = "none"); slides[i].style.display = "block"; Array.from(dots.children).forEach((d,di)=> d.classList.toggle("active", di===i)); idx = i; }
+  if(dots) dots.innerHTML = "";
+  slides.forEach((_,i)=>{
+    const b = el("button","hero-dot");
+    b.type = "button";
+    b.onclick = ()=> go(i);
+    if(dots) dots.appendChild(b);
+  });
+  function show(i){
+    slides.forEach(s=> s.style.display = "none");
+    slides[i].style.display = "block";
+    if(dots) Array.from(dots.children).forEach((d,di)=> d.classList.toggle("active", di===i));
+    idx = i;
+  }
   function go(i){ show((i+slides.length)%slides.length); }
   show(0);
   let t = setInterval(()=> go(idx+1), AUTO_MS);
@@ -49,6 +73,7 @@ function initHero(){
 
 /* FEATURED rendering + behavior */
 let featuredInterval = null;
+
 function renderFeatured(products){
   let container = document.getElementById("featured-carousel");
   if(!container){
@@ -65,6 +90,7 @@ function renderFeatured(products){
 
   featured.forEach(p => {
     const card = el("div","product-card");
+
     // image or fallback -> show "No Image" box on error
     if(p.image){
       const src = /^https?:\/\//i.test(p.image) ? p.image : `images/products/${p.image}`;
@@ -79,21 +105,31 @@ function renderFeatured(products){
     const title = el("h3"); title.innerText = p.name;
     const desc = el("p"); desc.className = "desc"; desc.innerText = p.description || "";
     const priceRow = el("div","price-row");
-    const final = p.offer && p.offer>0 ? p.offer : p.mrp;
-    if(p.offer && p.offer>0){ const mrp = el("span","mrp"); mrp.innerText = `₹${p.mrp}`; const off = el("span","offer"); off.innerText = `₹${p.offer}`; priceRow.appendChild(mrp); priceRow.appendChild(off); }
-    else { const off = el("span","offer"); off.innerText = `₹${final}`; priceRow.appendChild(off); }
+    const final = (p.offer && p.offer > 0) ? p.offer : p.mrp;
+    if(p.offer && p.offer > 0){
+      const mrp = el("span","mrp"); mrp.innerText = "₹" + p.mrp;
+      const off = el("span","offer"); off.innerText = "₹" + p.offer;
+      priceRow.appendChild(mrp); priceRow.appendChild(off);
+    } else {
+      const off = el("span","offer"); off.innerText = "₹" + final;
+      priceRow.appendChild(off);
+    }
     info.appendChild(title); info.appendChild(desc); info.appendChild(priceRow);
     card.appendChild(info);
 
     const actions = el("div","card-actions");
-    const view = el("button","view-btn"); view.innerText = "View";
-    const add = el("button","buy-btn"); add.innerText = "Add";
+    const view = el("button","view-btn"); view.type="button"; view.innerText = "View";
+    const add = el("button","buy-btn"); add.type="button"; add.innerText = "Add";
     actions.appendChild(view); actions.appendChild(add);
     card.appendChild(actions);
 
+    // clicking Add only adds; clicking anywhere else opens popup
     card.addEventListener("click", (ev) => {
-      if(ev.target === add){ window.addToCart && window.addToCart({ id: p.id, name: p.name, price: final, qty:1, image: p.image || 'images/logo.png' }); (window.showToast||(()=>{}))("Added to cart"); return; }
-      // open popup for whole card click
+      if(ev.target === add){
+        window.addToCart && window.addToCart({ id: p.id, name: p.name, price: final, qty:1, image: p.image || 'images/logo.png' });
+        (window.showToast||(()=>{}))("Added to cart");
+        return;
+      }
       showProductPopup(p);
     });
 
@@ -116,29 +152,28 @@ function initFeaturedBehavior(){
   const cards = Array.from(container.children);
   if(!cards.length) return;
 
-  // compute width (card width + gap)
-  // ensure layout measured after rendering
+  // measure card and gap safely (in case layout not yet painted)
   const cardRect = cards[0].getBoundingClientRect();
-  const gap = 14; // matches CSS
-  const step = cardRect.width + gap;
+  const gap = 14; // CSS gap
+  const step = Math.round(cardRect.width + gap);
 
   if(isMobile){
-    // Mobile: show 2 side-by-side, auto-scroll perView, snap style
-    container.style.flexDirection = "row"; // allow horizontal row with overflow-x
+    // Mobile: show 2 side-by-side, auto-scroll one-by-one, snap style
+    container.style.flexDirection = "row";
     container.style.overflowX = "auto";
     container.style.scrollSnapType = "x mandatory";
-    // use interval to auto-advance by one "step" (two cards visible, still advance by one card for smoother)
+    // auto-advance by one card
     let idx = 0;
     featuredInterval = setInterval(()=> {
       idx = (idx + 1) % cards.length;
-      // smooth scroll to card idx
       cards[idx].scrollIntoView({ behavior: 'smooth', inline: 'start' });
     }, AUTO_MS);
 
-    // allow user touch to pause auto scroll
+    // pause auto scroll on user interaction
     container.addEventListener("touchstart", ()=> { if(featuredInterval){ clearInterval(featuredInterval); featuredInterval = null; } }, { once: true });
-    // no arrows on mobile; dots below
-    renderFeaturedDots(container, cards);
+
+    // render dots
+    renderFeaturedDots(container, cards, MOBILE_PER_VIEW);
     return;
   }
 
@@ -152,8 +187,8 @@ function initFeaturedBehavior(){
   const wrap = document.getElementById("featured-carousel-wrap");
   if(wrap && !document.getElementById("featured-prev")){
     const controls = el("div","featured-controls");
-    const prev = el("button","featured-arrow"); prev.id = "featured-prev"; prev.innerText = "◀";
-    const next = el("button","featured-arrow"); next.id = "featured-next"; next.innerText = "▶";
+    const prev = el("button","featured-arrow"); prev.id = "featured-prev"; prev.type="button"; prev.innerText = "◀";
+    const next = el("button","featured-arrow"); next.id = "featured-next"; next.type="button"; next.innerText = "▶";
     prev.onclick = ()=> { index = Math.max(0, index - perView); slideTo(index); };
     next.onclick = ()=> { index = Math.min(total - perView, index + perView); slideTo(index); };
     controls.appendChild(prev); controls.appendChild(next);
@@ -166,7 +201,7 @@ function initFeaturedBehavior(){
   function slideTo(i){
     index = Math.max(0, Math.min(i, Math.max(0, total - perView)));
     const x = index * step;
-    container.style.transform = `translateX(-${x}px)`;
+    container.style.transform = "translateX(-" + x + "px)";
     updateDots(index, perView);
   }
 
@@ -180,12 +215,12 @@ function initFeaturedBehavior(){
   container.addEventListener("mouseenter", ()=> { if(featuredInterval){ clearInterval(featuredInterval); featuredInterval=null; } });
   container.addEventListener("mouseleave", ()=> { if(!featuredInterval) featuredInterval = setInterval(()=> { const nextIndex = (index + perView) > (total - perView) ? 0 : index + perView; slideTo(nextIndex); }, AUTO_MS); });
 
-  // allow mouse drag on desktop for convenience
-  let isDown=false, startX, scrollLeft;
-  container.addEventListener('mousedown', (e)=> { isDown=true; container.classList.add('active'); startX = e.pageX - container.offsetLeft; scrollLeft = index; });
-  container.addEventListener('mousemove', (e)=> { if(!isDown) return; const x = e.pageX - container.offsetLeft; const dx = x - startX; if(Math.abs(dx) > 30){ if(dx < 0) { /* drag left */ slideTo(index + 1); } else { slideTo(index - 1); } isDown=false; } });
-  container.addEventListener('mouseup', ()=> { isDown=false; container.classList.remove('active'); });
-  container.addEventListener('mouseleave', ()=> { isDown=false; container.classList.remove('active'); });
+  // mouse drag for desktop (simple)
+  let isDown=false, startX=0;
+  container.addEventListener('mousedown', (e)=> { isDown=true; startX = e.pageX; });
+  container.addEventListener('mousemove', (e)=> { if(!isDown) return; const dx = e.pageX - startX; if(Math.abs(dx) > 40){ if(dx < 0) slideTo(index + 1); else slideTo(index - 1); isDown=false; } });
+  container.addEventListener('mouseup', ()=> { isDown=false; });
+  container.addEventListener('mouseleave', ()=> { isDown=false; });
 }
 
 /* render dots helper */
@@ -194,7 +229,7 @@ function renderFeaturedDots(container, cards, perViewOverride){
   let dotsArea = document.getElementById("featured-dots");
   if(dotsArea) dotsArea.remove();
   const dotsWrap = el("div","featured-dots"); dotsWrap.id = "featured-dots";
-  container.parentElement.appendChild(dotsWrap);
+  if(container.parentElement) container.parentElement.appendChild(dotsWrap);
 
   const perView = perViewOverride || MOBILE_PER_VIEW;
   const total = cards.length;
@@ -202,7 +237,13 @@ function renderFeaturedDots(container, cards, perViewOverride){
   dotsWrap.innerHTML = "";
   for(let i=0;i<pages;i++){
     const d = el("button","hero-dot");
-    d.onclick = ()=> { const idx = i * perView; container.style.transform = `translateX(-${idx * (cards[0].getBoundingClientRect().width + 14)}px)`; updateDots(idx, perView); };
+    d.type = "button";
+    d.onclick = ()=> {
+      const idx = i * perView;
+      const targetX = idx * (cards[0].getBoundingClientRect().width + 14);
+      container.style.transform = "translateX(-" + targetX + "px)";
+      updateDots(idx, perView);
+    };
     dotsWrap.appendChild(d);
   }
   // activate first
@@ -217,27 +258,27 @@ function updateDots(indexVal, perView){
   children.forEach((d,i)=> d.classList.toggle("active", i === page));
 }
 
-/* PRODUCT POPUP (same implementation used by products.js) — ensure consistent API usage */
+/* PRODUCT POPUP (clean safe string concatenation, no nested templates) */
 function createPopupIfMissing(){
   if(document.getElementById("product-popup")) return;
   const pop = el("div","product-popup"); pop.id = "product-popup";
-  pop.innerHTML = `
-    <div class="popup-card">
-      <button class="popup-close" aria-label="Close">✕</button>
-      <div class="popup-grid">
-        <div class="popup-media"><img id="pp-img" alt="product image"></div>
-        <div class="popup-info">
-          <h3 id="pp-name"></h3>
-          <p id="pp-desc" class="desc"></p>
-          <div id="pp-price" class="popup-price"></div>
-          <div id="pp-variants" class="variants-row"></div>
-          <div class="popup-actions">
-            <button id="pp-add" class="buy-btn">Add to Cart</button>
-            <button id="pp-close" class="view-btn">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>`;
+  pop.innerHTML = ''
+    + '<div class="popup-card">'
+    + '  <button class="popup-close" aria-label="Close">✕</button>'
+    + '  <div class="popup-grid">'
+    + '    <div class="popup-media"><img id="pp-img" alt="product image"></div>'
+    + '    <div class="popup-info">'
+    + '      <h3 id="pp-name"></h3>'
+    + '      <p id="pp-desc" class="desc"></p>'
+    + '      <div id="pp-price" class="popup-price"></div>'
+    + '      <div id="pp-variants" class="variants-row"></div>'
+    + '      <div class="popup-actions">'
+    + '        <button id="pp-add" class="buy-btn">Add to Cart</button>'
+    + '        <button id="pp-close" class="view-btn">Close</button>'
+    + '      </div>'
+    + '    </div>'
+    + '  </div>'
+    + '</div>';
   document.body.appendChild(pop);
   pop.querySelector(".popup-close").addEventListener("click", hidePopup);
   pop.querySelector("#pp-close").addEventListener("click", hidePopup);
@@ -245,37 +286,60 @@ function createPopupIfMissing(){
 }
 function showPopupNoImage(){ const media = document.querySelector(".popup-media"); if(!media) return; if(media.querySelector(".no-image")) { media.querySelector(".no-image").style.display="flex"; return; } const ph = el("div","no-image"); ph.style.height="340px"; ph.innerText="No Image"; media.appendChild(ph); }
 function removePopupNoImage(){ const ph = document.querySelector(".popup-media .no-image"); if(ph) ph.style.display="none"; }
+
 function showProductPopup(p){
   createPopupIfMissing();
-  const pop = document.getElementById("product-popup"); pop.style.display="flex"; pop.classList.add("popup-show");
+  const pop = document.getElementById("product-popup"); pop.style.display = "flex"; pop.classList.add("popup-show");
   const img = document.getElementById("pp-img");
   if(p.image){
-    img.src = /^https?:\/\//i.test(p.image) ? p.image : `images/products/${p.image}`;
+    img.src = /^https?:\/\//i.test(p.image) ? p.image : ('images/products/' + p.image);
     img.style.display = "block";
     img.onerror = function(){ img.style.display='none'; showPopupNoImage(); };
     removePopupNoImage();
   } else { img.style.display='none'; showPopupNoImage(); }
+
   document.getElementById("pp-name").innerText = p.name;
   document.getElementById("pp-desc").innerText = p.description || "";
-  const final = p.offer && p.offer>0 ? p.offer : p.mrp;
-  document.getElementById("pp-price").innerHTML = `₹${final}${p.offer && p.offer>0 ? \` <span style="text-decoration:line-through;color:#999;margin-left:8px">₹\${p.mrp}</span>\` : ''}`;
+  const final = (p.offer && p.offer>0) ? p.offer : p.mrp;
+
+  // safe string concat for price and optional MRP
+  var priceHtml = "₹" + final;
+  if(p.offer && p.offer>0){
+    priceHtml += ' <span style="text-decoration:line-through;color:#999;margin-left:8px">₹' + p.mrp + '</span>';
+  }
+  document.getElementById("pp-price").innerHTML = priceHtml;
+
   const variantsWrap = document.getElementById("pp-variants");
   variantsWrap.innerHTML = "";
-  if(!p.variants || !p.variants.length){ variantsWrap.style.display = "none"; } else {
+  if(!p.variants || !p.variants.length){
+    variantsWrap.style.display = "none";
+    // bind add
+    document.getElementById("pp-add").onclick = function(){
+      window.addToCart && window.addToCart({ id: p.id, name: p.name, price: final, qty:1, image: p.image || 'images/logo.png' });
+      (window.showToast||(()=>{}))("Added to cart");
+      hidePopup();
+    };
+  } else {
     variantsWrap.style.display = "flex";
     let selected = p.variants[0];
     p.variants.forEach((v,i)=> {
-      const b = el("button","variant-btn"); b.innerText = v;
+      const b = el("button","variant-btn"); b.type="button"; b.innerText = v;
       if(i===0) b.classList.add("selected");
-      b.addEventListener("click", ()=> { Array.from(variantsWrap.children).forEach(n=>n.classList.remove("selected")); b.classList.add("selected"); selected = v; });
+      b.addEventListener("click", ()=> {
+        Array.from(variantsWrap.children).forEach(n=>n.classList.remove("selected"));
+        b.classList.add("selected");
+        selected = v;
+      });
       variantsWrap.appendChild(b);
     });
-    document.getElementById("pp-add").onclick = ()=> { window.addToCart && window.addToCart({ id: p.id, name: \`\${p.name} (\${selected})\`, price: final, qty:1, image: p.image || 'images/logo.png' }); (window.showToast||(()=>{}))("Added to cart"); hidePopup(); };
-  }
-  if(!p.variants || !p.variants.length){
-    document.getElementById("pp-add").onclick = ()=> { window.addToCart && window.addToCart({ id: p.id, name: p.name, price: final, qty:1, image: p.image || 'images/logo.png' }); (window.showToast||(()=>{}))("Added to cart"); hidePopup(); };
+    document.getElementById("pp-add").onclick = function(){
+      window.addToCart && window.addToCart({ id: p.id, name: (p.name + " (" + selected + ")"), price: final, qty:1, image: p.image || 'images/logo.png' });
+      (window.showToast||(()=>{}))("Added to cart");
+      hidePopup();
+    };
   }
 }
+
 function hidePopup(){ const pop = document.getElementById("product-popup"); if(pop){ pop.classList.remove("popup-show"); setTimeout(()=> pop.style.display="none", 260); } }
 
 /* INIT on DOM ready */
@@ -290,4 +354,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if(resizeTimer) clearTimeout(resizeTimer);
     resizeTimer = setTimeout(()=> { renderFeatured(products); }, 300);
   });
+
+  // expose showProductPopup globally for other pages/modules
+  window.showProductPopup = showProductPopup;
 });
