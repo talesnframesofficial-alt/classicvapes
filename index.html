@@ -10,22 +10,26 @@
 </head>
 <body>
   <!-- HEADER -->
-  <header class="site-header">
-    <a class="brand" href="index.html">
-      <img src="images/logo.png" alt="ClassicVapes" class="logo">
-    </a>
+ <header class="top-header">
+  <div class="header-left">
+    <a href="index.html"><img src="images/logo.png" class="logo" alt="ClassicVapes"></a>
+  </div>
 
-    <div class="header-actions">
-      <button class="cart-btn" onclick="toggleCart()" aria-label="Cart">🛒 <span id="cart-count">0</span></button>
-      <button class="hamburger" aria-label="Menu" onclick="document.body.classList.toggle('nav-open')">☰</button>
-    </div>
-
-    <nav class="main-nav" role="navigation">
+  <div class="header-right">
+    <nav class="nav-links">
       <a href="index.html">Home</a>
       <a href="products.html">Products</a>
       <a href="checkout.html">Checkout</a>
     </nav>
-  </header>
+
+    <button class="cart-btn" onclick="toggleCart()">
+      <svg viewBox="0 0 24 24" class="cart-icon">
+        <path d="M7 4h-2l-3 9v2h2l1 5h14l1-5h2v-2l-3-9h-2m-2 0h-6m-1 0l-1 3h10l-1-3m-7 7h10l1 4h-12l1-4zm2 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" fill="currentColor"/>
+      </svg>
+      <span id="cart-count">0</span>
+    </button>
+  </div>
+</header>
 
   <!-- HERO -->
   <section class="hero-slider" id="hero-slider" aria-label="Promotions">
