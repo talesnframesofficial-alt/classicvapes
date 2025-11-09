@@ -1,48 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ClassicVapes Products</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Products — ClassicVapes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <!-- Preloader -->
-  <div id="preloader">
-    <img src="images/logo.png" alt="Logo">
+<header class="top-header">
+  <div class="header-left">
+    <a href="index.html"><img src="images/logo.png" class="logo" alt="ClassicVapes" onerror="this.onerror=null;this.src='images/logo.png'"></a>
   </div>
-
-  <!-- Header -->
-  <header>
-    <a href="index.html"><img src="images/logo.png" class="logo" alt="Logo"></a>
-    <nav>
+  <div class="header-right">
+    <nav class="nav-links">
       <a href="index.html">Home</a>
       <a href="products.html">Products</a>
       <a href="checkout.html">Checkout</a>
-      <button class="view-cart-btn" onclick="toggleCart()">🛒 Cart (<span id="cart-count">0</span>)</button>
     </nav>
-  </header>
-
-  <!-- Search Bar -->
-  <section class="search-section">
-    <input type="text" id="search-input" placeholder="Search products...">
-  </section>
-
-  <!-- Products Container -->
-  <section class="products-container" id="products-container"></section>
-
-  <!-- Cart Popup -->
-  <div class="cart" id="cart">
-    <h3>Your Cart</h3>
-    <div id="cart-items"></div>
-    <p class="cart-total">Total: ₹<span id="total">0</span></p>
-    <button class="checkout-btn" onclick="window.location.href='checkout.html'">Checkout</button>
+    <button class="cart-btn" onclick="toggleCart()"> <svg viewBox="0 0 24 24" width="20" height="20"><path d="M7 4h-2l-3 9v2h2l1 5h14l1-5h2v-2l-3-9h-2m-2 0h-6m-1 0l-1 3h10l-1-3m-7 7h10l1 4h-12l1-4zm2 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" fill="currentColor"/></svg> <span id="cart-count">0</span></button>
+    <button class="hamburger" onclick="document.body.classList.toggle('nav-open')">☰</button>
   </div>
+</header>
 
-  <footer>
-    Contact us: classicvapes@gmail.com | Instagram: @classicvapes
-  </footer>
+<main>
+  <section class="products-list">
+    <div class="products-grid" id="products-grid"></div>
+  </section>
+</main>
 
-  <script src="js/products.js"></script>
+<div class="cart" id="cart" aria-hidden="true">
+  <h3>Your Cart</h3>
+  <div id="cart-items"></div>
+  <p class="cart-total">Total: ₹<span id="total">0</span></p>
+  <button class="checkout-btn" onclick="location.href='checkout.html'">Checkout</button>
+</div>
+
+<script src="js/cart.js" defer></script>
+<script src="js/products.js" defer></script>
 </body>
 </html>
