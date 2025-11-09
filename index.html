@@ -4,117 +4,68 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ClassicVapes</title>
-
-  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
-<header>
-  <a href="index.html">
-    <img src="images/logo.png" class="logo" onerror="this.src='https://i.ibb.co/placeholder/logo.png';" alt="ClassicVapes">
-  </a>
+<header class="top-header">
+  <div class="header-left">
+    <a href="index.html"><img src="images/logo.png" class="logo" alt="ClassicVapes" onerror="this.onerror=null;this.src='images/logo.png'"></a>
+  </div>
 
   <div class="header-right">
-    <nav>
+    <nav class="nav-links">
       <a href="index.html">Home</a>
       <a href="products.html">Products</a>
       <a href="checkout.html">Checkout</a>
     </nav>
 
-    <button class="cart-btn" onclick="toggleCart()">
-      🛒 <span id="cart-count">0</span>
+    <button class="cart-btn" onclick="toggleCart()" aria-label="Open cart">
+      <svg viewBox="0 0 24 24" class="cart-icon" width="22" height="22"><path d="M7 4h-2l-3 9v2h2l1 5h14l1-5h2v-2l-3-9h-2m-2 0h-6m-1 0l-1 3h10l-1-3m-7 7h10l1 4h-12l1-4zm2 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" fill="currentColor"/></svg>
+      <span id="cart-count">0</span>
     </button>
+
+    <button class="hamburger" aria-label="Menu" onclick="document.body.classList.toggle('nav-open')">☰</button>
   </div>
 </header>
 
-<!-- HERO SLIDER -->
-<section class="hero-slider" id="hero-slider">
-  <div class="slide"><img src="https://i.ibb.co/VWNgVPKc/hero1.webp" onerror="this.src='https://i.ibb.co/placeholder/hero.webp'"></div>
-  <div class="slide"><img src="https://i.ibb.co/zML9WG1/hero2.jpg" onerror="this.src='https://i.ibb.co/placeholder/hero.webp'"></div>
-  <div class="slide"><img src="https://i.ibb.co/XZJ23Qt6/hero4.webp" onerror="this.src='https://i.ibb.co/placeholder/hero.webp'"></div>
+<!-- HERO -->
+<section class="hero-slider" id="hero-slider" aria-label="Promotions">
+  <div class="hero-slide"><img src="https://i.ibb.co/VWNgVPKc/hero1.webp" alt="Hero 1" loading="lazy"></div>
+  <div class="hero-slide"><img src="https://i.ibb.co/zML9WG1/hero2.jpg" alt="Hero 2" loading="lazy"></div>
+  <div class="hero-slide"><img src="https://i.ibb.co/XZJ23Qt6/hero4.webp" alt="Hero 3" loading="lazy"></div>
 
-  <button class="shop-btn" onclick="location.href='products.html'">Shop Now</button>
-  <div id="hero-dots"></div>
+  <div class="hero-overlay">
+    <h1 class="hero-title">Style. Scent. Spark.</h1>
+    <p class="hero-sub">Discover premium lifestyle products designed with elegance.</p>
+    <button class="shop-btn" onclick="location.href='products.html'">Shop Now</button>
+  </div>
+
+  <div id="hero-dots" class="hero-dots" aria-hidden="false"></div>
 </section>
 
-<!-- FEATURED PRODUCTS -->
+<!-- FEATURED -->
 <section>
   <h2 class="section-title">Featured Products</h2>
-  <div id="featured-carousel"></div>
+  <div id="featured-carousel-wrap">
+    <div id="featured-carousel"></div>
+  </div>
 </section>
 
-<!-- CART POPUP -->
-<div class="cart" id="cart">
+<!-- CART -->
+<div class="cart" id="cart" aria-hidden="true">
   <h3>Your Cart</h3>
   <div id="cart-items"></div>
   <p class="cart-total">Total: ₹<span id="total">0</span></p>
   <button class="checkout-btn" onclick="location.href='checkout.html'">Checkout</button>
 </div>
 
-<footer>Contact us: classicvapes@gmail.com | Instagram: @classicvapes</footer>
+<!-- POPUP placeholder will be injected by JS -->
 
-<script src="js/cart.js"></script>
+<footer class="site-footer">Contact us: classicvapes@gmail.com | Instagram: @classicvapes</footer>
 
-<script>
-/* ==== HERO SLIDER ==== */
-let slides = document.querySelectorAll(".slide");
-let dotsBox = document.querySelector("#hero-dots");
-let index = 0;
-
-slides.forEach((_, i) => {
-  let d = document.createElement("div");
-  d.classList.add("hero-dot");
-  if(i === 0) d.classList.add("active");
-  d.onclick = () => goSlide(i);
-  dotsBox.appendChild(d);
-});
-
-function goSlide(i){
-  slides.forEach(s => s.style.display="none");
-  document.querySelectorAll(".hero-dot").forEach(d => d.classList.remove("active"));
-  slides[i].style.display="block";
-  document.querySelectorAll(".hero-dot")[i].classList.add("active");
-  index = i;
-}
-
-function autoSlide(){
-  index = (index + 1) % slides.length;
-  goSlide(index);
-}
-goSlide(0);
-setInterval(autoSlide, 3000);
-
-/* ==== FETCH PRODUCTS ==== */
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT15M2LZhCAW1EXXp1oRB9oFn5Enj2DvuReH7tlPPlq3rkSffsRy12r09TsmCLgapn4jG01U9bcv6-2/pub?output=csv";
-
-async function loadFeatured() {
-  const res = await fetch(CSV_URL);
-  const data = await res.text();
-  const rows = data.split("\n").slice(1);
-
-  const container = document.getElementById("featured-carousel");
-
-  rows.slice(0,10).forEach(row => {
-    const col = row.split(",");
-    const [id,name,price,img] = col;
-
-    container.innerHTML += `
-    <div class="product-card">
-      <img src="${img}" onerror="this.src='https://i.ibb.co/placeholder/product.png'">
-      <h3>${name}</h3>
-      <div class="price-row"><span class="offer">₹${price}</span></div>
-      <div class="card-actions">
-        <button class="view-btn">View</button>
-        <button class="buy-btn" onclick="addToCart({id:'${id}',name:'${name}',price:${price}})">Add</button>
-      </div>
-    </div>`;
-  });
-}
-
-loadFeatured();
-</script>
-
+<script src="js/cart.js" defer></script>
+<script src="js/home.js" defer></script>
 </body>
 </html>
