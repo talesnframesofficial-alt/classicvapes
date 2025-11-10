@@ -36,10 +36,10 @@ body{overflow-x:hidden}
 .hero-dot{width:8px;height:8px;background:rgba(255,255,255,0.45);border-radius:50%;transition:all .28s}
 .hero-dot.active{width:26px;background:#fff;border-radius:14px;box-shadow:0 10px 26px rgba(0,0,0,0.15)}
 
-/* Featured */
+/* Featured wrapper */
 .section-title{text-align:center;font-size:1.05rem;margin:22px 10px;font-weight:700;color:var(--text)}
 #featured-carousel-wrap{max-width:1280px;margin:0 auto;padding:6px 14px;position:relative}
-#featured-carousel{display:flex;gap:var(--gap);overflow:hidden;align-items:flex-start;transition:transform .48s cubic-bezier(.2,.9,.2,1);will-change:transform}
+#featured-carousel{display:flex;gap:var(--gap);align-items:flex-start;transition:transform .48s cubic-bezier(.2,.9,.2,1);will-change:transform}
 
 /* Product card */
 .product-card{width:100%;background:#fff;border-radius:var(--card-radius);box-shadow:0 10px 30px rgba(13,20,25,0.06);padding:12px;display:flex;flex-direction:column;gap:10px;cursor:pointer;transition:transform .18s,box-shadow .18s;overflow:hidden}
@@ -97,14 +97,28 @@ body{overflow-x:hidden}
 @media (min-width:600px) and (max-width:1199px){ .products-grid{grid-template-columns:repeat(4,1fr);} .product-card{height:var(--card-height-tablet)} }
 @media (min-width:1200px){ .products-grid{grid-template-columns:repeat(6,1fr);} .product-card{height:var(--card-height-desktop)} }
 
-/* adjustments */
+/* FEATURED modes */
+/* Desktop: show up to 8 in a row (static grid) */
+@media (min-width:1200px){
+  #featured-carousel{display:grid;grid-template-columns:repeat(8,1fr);gap:var(--gap)}
+  #featured-carousel .product-card{height:260px}
+  .featured-dots{display:none}
+}
+
+/* Tablet (>=600 && <1200): carousel style with 4 per view (swipe + auto ok) */
+@media (min-width:600px) and (max-width:1199px){
+  #featured-carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px}
+  #featured-carousel .product-card{min-width:calc((100% - (var(--gap)*3))/4);scroll-snap-align:start;height:var(--card-height-tablet)}
+  .featured-dots{display:flex;justify-content:center;margin-top:8px}
+}
+
+/* Mobile portrait: 2 per view carousel */
 @media (max-width:599px){
-  .hero-slider{height:320px}
-  .product-card h3{font-size:13px}
-  .product-card p.desc{font-size:11px}
-  .popup-grid{grid-template-columns:1fr}
-  .popup-media img{height:220px}
+  #featured-carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px}
+  #featured-carousel .product-card{min-width:calc((100% - var(--gap))/2);scroll-snap-align:start;height:var(--card-height-mobile)}
+  .featured-dots{display:flex;justify-content:center;margin-top:8px}
   .nav-links{display:none}
   .hamburger{display:block}
   .cart-btn{min-width:38px;padding:6px}
 }
+
