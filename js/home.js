@@ -1,10 +1,14 @@
-/* js/home.js — stable featured + hero + popup (auto 3s, mobile auto stops on touch) */
+/* js/home.js — final featured + hero + popup
+   Rules implemented:
+   - Desktop (>=1200): featured shown as static grid of up to 8 items (no auto scroll)
+   - Tablet (600-1199): carousel 4 per view, auto-scroll (3s) + swipe; auto stops on touch
+   - Mobile portrait (<600): carousel 2 per view, auto-scroll (3s) + swipe; auto stops on touch
+   - Mobile landscape: 4 per view (handled by media queries)
+*/
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT15M2LZhCAW1EXXp1oRB9oFn5Enj2DvuReH7tlPPlq3rkSffsRy12r09TsmCLgapn4jG01U9bcv6-2/pub?output=csv";
-const AUTO_MS = 3000; // 3 seconds
-const MOBILE_VIEW_BREAK = 900;
-const MOBILE_PER_VIEW = 2;
-const DESKTOP_PER_VIEW = 4;
-const FEATURE_LIMIT = 12;
+const AUTO_MS = 3000;
+const MOBILE_BREAK = 600;
+const TABLET_BREAK = 1199;
 
 function el(tag, cls){ const d=document.createElement(tag); if(cls) d.className = cls; return d; }
 
@@ -13,7 +17,7 @@ function csvToJson(csv){
   const lines = csv.trim().split(/\r?\n/);
   const headers = lines.shift().split(",").map(h=>h.trim());
   return lines.map(line => {
-    const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g,"").trim());
+    const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,"").trim());
     const obj = {};
     headers.forEach((h,i)=> obj[h] = cols[i] !== undefined ? cols[i] : "");
     return obj;
@@ -46,31 +50,30 @@ async function fetchProducts(){
 function initHero(){
   const slides = Array.from(document.querySelectorAll(".hero-slide"));
   if(!slides.length) return;
-  let idx = 0;
+  let idx=0;
   const dots = document.getElementById("hero-dots");
-  if(dots) dots.innerHTML = "";
+  if(dots) dots.innerHTML="";
   slides.forEach((_,i)=>{
     const b = el("button","hero-dot"); b.type="button";
-    b.onclick = ()=> go(i);
+    b.onclick = ()=> show(i);
     if(dots) dots.appendChild(b);
   });
   function show(i){
-    slides.forEach(s => s.style.display = "none");
-    slides[i].style.display = "block";
+    slides.forEach(s=> s.style.display="none");
+    slides[i].style.display="block";
     if(dots) Array.from(dots.children).forEach((d,di)=> d.classList.toggle("active", di===i));
     idx = i;
   }
-  function go(i){ show((i + slides.length) % slides.length); }
   show(0);
-  let t = setInterval(()=> go(idx+1), AUTO_MS);
+  let t = setInterval(()=> show((idx+1) % slides.length), AUTO_MS);
   const slider = document.querySelector(".hero-slider");
   if(slider){
     slider.addEventListener("mouseenter", ()=> clearInterval(t));
-    slider.addEventListener("mouseleave", ()=> t = setInterval(()=> go(idx+1), AUTO_MS));
+    slider.addEventListener("mouseleave", ()=> t = setInterval(()=> show((idx+1) % slides.length), AUTO_MS));
   }
 }
 
-/* images loaded helper */
+/* Wait images */
 function imagesLoaded(container){
   const imgs = Array.from(container.querySelectorAll("img"));
   if(!imgs.length) return Promise.resolve();
@@ -80,9 +83,9 @@ function imagesLoaded(container){
   }));
 }
 
-/* FEATURED */
-let featuredInterval = null;
-let featuredUserTouched = false;
+/* Featured logic */
+let autoTimer = null;
+let userTouched = false;
 
 async function renderFeatured(products){
   let container = document.getElementById("featured-carousel");
@@ -92,28 +95,27 @@ async function renderFeatured(products){
   }
   container.innerHTML = "";
 
-  const featured = products.filter(p=>p.featured).slice(0, FEATURE_LIMIT);
+  const featured = products.filter(p => p.featured).slice(0, 12); // collect up to 12
   if(!featured.length){
     container.innerHTML = '<div style="padding:18px;color:#666">No featured products. Mark Featured = Yes in sheet.</div>';
     return;
   }
 
-  featured.forEach(p=>{
+  featured.forEach(p => {
     const card = el("div","product-card");
     const media = el("div","product-media");
     if(p.image){
       const src = /^https?:\/\//i.test(p.image) ? p.image : ('images/products/' + p.image);
-      const img = el("img"); img.src = src; img.alt = p.name; img.loading="lazy";
-      img.onerror = function(){ this.remove(); const ph = el("div","no-image"); ph.innerText = "No Image"; media.appendChild(ph); };
+      const img = el("img"); img.src = src; img.alt = p.name; img.loading = "lazy";
+      img.onerror = function(){ this.remove(); const ph = el("div","no-image"); ph.innerText="No Image"; media.appendChild(ph); };
       media.appendChild(img);
     } else {
-      const ph = el("div","no-image"); ph.innerText = "No Image"; media.appendChild(ph);
+      const ph = el("div","no-image"); ph.innerText="No Image"; media.appendChild(ph);
     }
     card.appendChild(media);
 
-    const info = el("div");
     const title = el("h3"); title.innerText = p.name;
-    const desc = el("p"); desc.className = "desc"; desc.innerText = p.description || "";
+    const desc = el("p","desc"); desc.innerText = p.description || "";
     const priceRow = el("div","price-row");
     const final = (p.offer && p.offer>0) ? p.offer : p.mrp;
     if(p.offer && p.offer>0){
@@ -124,21 +126,24 @@ async function renderFeatured(products){
       const off = el("span","offer"); off.innerText = "₹" + final;
       priceRow.appendChild(off);
     }
-    info.appendChild(title); info.appendChild(desc); info.appendChild(priceRow);
-    card.appendChild(info);
 
+    card.appendChild(title); card.appendChild(desc); card.appendChild(priceRow);
+
+    // actions area
     const actions = el("div","card-actions");
-    const view = el("button","view-btn"); view.type="button"; view.innerText = "View";
-    const add = el("button","buy-btn"); add.type="button"; add.innerText = "Add";
+    const view = el("button","view-btn"); view.type="button"; view.innerText="View";
+    const add = el("button","buy-btn"); add.type="button"; add.innerText="Add";
     actions.appendChild(view); actions.appendChild(add);
     card.appendChild(actions);
 
-    card.addEventListener("click", (ev)=>{
+    // clicks
+    card.addEventListener("click", (ev) => {
       if(ev.target === add){
         window.addToCart && window.addToCart({ id: p.id, name: p.name, price: final, qty:1, image: p.image || 'images/logo.png' });
         (window.showToast||(()=>{}))("Added to cart");
         return;
       }
+      // open popup
       showProductPopup(p);
     });
 
@@ -154,91 +159,80 @@ function initFeaturedBehavior(){
   if(!container) return;
   container.style.transform = "";
   container.scrollLeft = 0;
-  if(featuredInterval){ clearInterval(featuredInterval); featuredInterval = null; }
-  featuredUserTouched = false;
+  if(autoTimer){ clearInterval(autoTimer); autoTimer = null; }
+  userTouched = false;
 
-  const isMobile = window.innerWidth < MOBILE_VIEW_BREAK;
-  const perView = isMobile ? MOBILE_PER_VIEW : DESKTOP_PER_VIEW;
-  const cards = Array.from(container.children);
-  if(!cards.length) return;
-
-  const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 14;
-  const cardRect = cards[0].getBoundingClientRect();
-  const step = Math.round(cardRect.width + gap);
-
-  if(isMobile){
-    container.style.flexDirection = "row";
-    container.style.overflowX = "auto";
-    container.style.scrollSnapType = "x mandatory";
-
-    let idx = 0;
-    featuredInterval = setInterval(()=> {
-      if(featuredUserTouched) return;
-      idx = (idx + 1) % cards.length;
-      cards[idx].scrollIntoView({ behavior: 'smooth', inline: 'start' });
-    }, AUTO_MS);
-
-    // if user touches/swipes, stop auto scroll (choice B)
-    container.addEventListener("touchstart", ()=> { featuredUserTouched = true; if(featuredInterval){ clearInterval(featuredInterval); featuredInterval = null; } }, { passive:true });
-
-    renderFeaturedDots(container, cards, MOBILE_PER_VIEW);
+  const width = window.innerWidth;
+  if(width >= 1200){
+    // Desktop: static grid handled by CSS (grid set in CSS via media query). No auto/drag behavior.
+    // Ensure any overflow hidden and remove listeners
+    container.style.overflow = "visible";
+    const dots = document.getElementById("featured-dots"); if(dots) dots.style.display = "none";
     return;
   }
 
-  // Desktop: auto group slide, loop back
-  container.style.flexDirection = "row";
-  container.style.overflow = "hidden";
-  const total = cards.length;
-  let index = 0;
+  // For mobile/tablet we use horizontal carousel with snap
+  container.style.overflowX = "auto";
+  container.style.scrollSnapType = "x mandatory";
+  const cards = Array.from(container.children);
+  if(!cards.length) return;
 
+  // compute perView based on breakpoints + orientation
+  let perView = 2;
+  if(width >= 600 && width <= 1199) perView = 4; // tablet portrait -> 4
+  if(width >= 900 && width <= 1199 && window.innerHeight < window.innerWidth) perView = 8; // tablet landscape show 8 if fits
+
+  // ensure card min-width to display perView
+  cards.forEach(c => {
+    if(width < 600) c.style.minWidth = `calc((100% - var(--gap)) / 2)`; // 2 per view
+    else if(width >= 600 && width < 1200) c.style.minWidth = `calc((100% - (var(--gap) * 3)) / 4)`; // 4 per view
+    else c.style.minWidth = ''; // desktop handled by CSS grid
+  });
+
+  // dots
   renderFeaturedDots(container, cards, perView);
 
-  function slideTo(i){
-    index = Math.max(0, Math.min(i, Math.max(0, total - perView)));
-    const x = index * step;
-    container.style.transform = "translateX(-" + x + "px)";
-    updateDots(index, perView);
-  }
-
-  featuredInterval = setInterval(()=> {
-    const nextIndex = (index + perView) > (total - perView) ? 0 : index + perView;
-    slideTo(nextIndex);
+  // auto scroll: advance one card at a time, stops if user touches (you chose B)
+  let idx = 0;
+  autoTimer = setInterval(()=> {
+    if(userTouched) return;
+    idx = (idx + 1) % cards.length;
+    cards[idx].scrollIntoView({ behavior: 'smooth', inline: 'start' });
   }, AUTO_MS);
 
-  container.addEventListener("mouseenter", ()=> { if(featuredInterval){ clearInterval(featuredInterval); featuredInterval=null; } });
-  container.addEventListener("mouseleave", ()=> { if(!featuredInterval) featuredInterval = setInterval(()=> { const nextIndex = (index + perView) > (total - perView) ? 0 : index + perView; slideTo(nextIndex); }, AUTO_MS); });
+  // stop on touch
+  container.addEventListener("touchstart", ()=> { userTouched = true; if(autoTimer){ clearInterval(autoTimer); autoTimer = null; } }, { passive:true });
 
-  // simple drag
-  let isDown=false, startX=0;
-  container.addEventListener('mousedown', (e)=> { isDown=true; startX = e.pageX; });
-  container.addEventListener('mousemove', (e)=> { if(!isDown) return; const dx = e.pageX - startX; if(Math.abs(dx) > 40){ if(dx < 0) slideTo(index + 1); else slideTo(index - 1); isDown=false; } });
-  container.addEventListener('mouseup', ()=> { isDown=false; });
-  container.addEventListener('mouseleave', ()=> { isDown=false; });
+  // allow swipe: no additional code needed due to native overflow-x scrolling and scroll-snap
 }
 
-/* dots helpers */
-function renderFeaturedDots(container, cards, perViewOverride){
+/* featured dots helper */
+function renderFeaturedDots(container, cards, perView){
   let dotsArea = document.getElementById("featured-dots");
   if(dotsArea) dotsArea.remove();
   const dotsWrap = el("div","featured-dots"); dotsWrap.id = "featured-dots";
   if(container.parentElement) container.parentElement.appendChild(dotsWrap);
-  const perView = perViewOverride || MOBILE_PER_VIEW;
-  const total = cards.length;
-  const pages = Math.max(1, Math.ceil(total / perView));
+  const pages = Math.max(1, Math.ceil(cards.length / (perView || 1)));
   dotsWrap.innerHTML = "";
   for(let i=0;i<pages;i++){
     const d = el("button","hero-dot"); d.type="button";
     d.onclick = ()=> {
-      const idx = i * perView;
-      const targetX = idx * (cards[0].getBoundingClientRect().width + (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 14));
-      container.style.transform = "translateX(-" + targetX + "px)";
-      updateDots(idx, perView);
+      const targetIndex = i * (perView || 1);
+      cards[Math.min(targetIndex, cards.length-1)].scrollIntoView({ behavior: 'smooth', inline: 'start' });
     };
     dotsWrap.appendChild(d);
   }
-  updateDots(0, perView);
+  // activate first
+  updateFeaturedDots(0, perView);
+  // update on scroll
+  container.addEventListener('scroll', throttle(()=> {
+    let left = container.scrollLeft;
+    const cardW = cards[0].getBoundingClientRect().width + (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 14);
+    const idx = Math.round(left / cardW);
+    updateFeaturedDots(idx, perView);
+  }, 120));
 }
-function updateDots(indexVal, perView){
+function updateFeaturedDots(indexVal, perView){
   const dotsWrap = document.getElementById("featured-dots");
   if(!dotsWrap) return;
   const children = Array.from(dotsWrap.children);
@@ -246,7 +240,10 @@ function updateDots(indexVal, perView){
   children.forEach((d,i)=> d.classList.toggle("active", i === page));
 }
 
-/* POPUP (exposed globally) */
+/* tiny throttle */
+function throttle(fn, wait){ let t=0; return function(){ const now = Date.now(); if(now - t > wait){ t = now; fn.apply(this,arguments); } } }
+
+/* POPUP (shared) */
 function createPopupIfMissing(){
   if(document.getElementById("product-popup")) return;
   const pop = el("div","product-popup"); pop.id = "product-popup";
@@ -272,7 +269,6 @@ function createPopupIfMissing(){
   pop.querySelector("#pp-close").addEventListener("click", hidePopup);
   pop.addEventListener("click", (e)=> { if(e.target === pop) hidePopup(); });
 }
-
 function showPopupNoImage(){ const media = document.querySelector(".popup-media"); if(!media) return; if(media.querySelector(".no-image")) { media.querySelector(".no-image").style.display="flex"; return; } const ph = el("div","no-image"); ph.style.height="100%"; ph.innerText="No Image"; media.appendChild(ph); }
 function removePopupNoImage(){ const ph = document.querySelector(".popup-media .no-image"); if(ph) ph.style.display="none"; }
 
@@ -309,7 +305,6 @@ function showProductPopup(p){
     document.getElementById("pp-add").onclick = function(){ window.addToCart && window.addToCart({ id: p.id, name: (p.name + " (" + selected + ")"), price: final, qty:1, image: p.image || 'images/logo.png' }); (window.showToast||(()=>{}))("Added to cart"); hidePopup(); };
   }
 }
-
 function hidePopup(){ const pop = document.getElementById("product-popup"); if(pop){ pop.classList.remove("popup-show"); setTimeout(()=> pop.style.display="none", 260); } }
 
 /* INIT */
@@ -317,7 +312,10 @@ document.addEventListener("DOMContentLoaded", async ()=>{
   initHero();
   const products = await fetchProducts();
   await renderFeatured(products);
+
   let resizeTimer = null;
   window.addEventListener("resize", ()=> { if(resizeTimer) clearTimeout(resizeTimer); resizeTimer = setTimeout(()=> { renderFeatured(products); }, 350); });
+
+  // expose globally for products page to call
   window.showProductPopup = showProductPopup;
 });
