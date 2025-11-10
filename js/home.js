@@ -1,4 +1,4 @@
-/* js/home.js — fixed, no nested template literals, featured carousel (mobile C, desktop E), hero, popup */
+/* js/home.js — featured + hero + popup (fixed) */
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT15M2LZhCAW1EXXp1oRB9oFn5Enj2DvuReH7tlPPlq3rkSffsRy12r09TsmCLgapn4jG01U9bcv6-2/pub?output=csv";
 const AUTO_MS = 3000;
 const MOBILE_VIEW_BREAK = 900;
@@ -6,14 +6,14 @@ const MOBILE_PER_VIEW = 2;
 const DESKTOP_PER_VIEW = 4;
 const FEATURE_LIMIT = 12;
 
-function el(tag, cls){ const d = document.createElement(tag); if(cls) d.className = cls; return d; }
+function el(tag, cls){ const d=document.createElement(tag); if(cls) d.className = cls; return d; }
 
 function csvToJson(csv){
   if(!csv) return [];
   const lines = csv.trim().split(/\r?\n/);
   const headers = lines.shift().split(",").map(h=>h.trim());
-  return lines.map(line=>{
-    const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c=>c.replace(/^"|"$/g,"").trim());
+  return lines.map(line => {
+    const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g,"").trim());
     const obj = {};
     headers.forEach((h,i)=> obj[h] = cols[i] !== undefined ? cols[i] : "");
     return obj;
@@ -50,18 +50,17 @@ function initHero(){
   const dots = document.getElementById("hero-dots");
   if(dots) dots.innerHTML = "";
   slides.forEach((_,i)=>{
-    const b = el("button","hero-dot");
-    b.type = "button";
+    const b = el("button","hero-dot"); b.type="button";
     b.onclick = ()=> go(i);
     if(dots) dots.appendChild(b);
   });
   function show(i){
-    slides.forEach(s=> s.style.display = "none");
+    slides.forEach(s => s.style.display = "none");
     slides[i].style.display = "block";
     if(dots) Array.from(dots.children).forEach((d,di)=> d.classList.toggle("active", di===i));
     idx = i;
   }
-  function go(i){ show((i+slides.length)%slides.length); }
+  function go(i){ show((i + slides.length) % slides.length); }
   show(0);
   let t = setInterval(()=> go(idx+1), AUTO_MS);
   const slider = document.querySelector(".hero-slider");
@@ -71,7 +70,7 @@ function initHero(){
   }
 }
 
-/* FEATURED rendering + behavior */
+/* FEATURED */
 let featuredInterval = null;
 
 function renderFeatured(products){
@@ -82,31 +81,32 @@ function renderFeatured(products){
   }
   container.innerHTML = "";
 
-  const featured = products.filter(p => p.featured).slice(0, FEATURE_LIMIT);
+  const featured = products.filter(p=>p.featured).slice(0, FEATURE_LIMIT);
   if(!featured.length){
-    container.innerHTML = `<div style="padding:18px;color:#666">No featured products. Mark Featured = Yes in sheet.</div>`;
+    container.innerHTML = '<div style="padding:18px;color:#666">No featured products. Mark Featured = Yes in sheet.</div>';
     return;
   }
 
-  featured.forEach(p => {
+  featured.forEach(p=>{
     const card = el("div","product-card");
-
-    // image or fallback -> show "No Image" box on error
+    // media wrapper (square)
+    const media = el("div","product-media");
     if(p.image){
-      const src = /^https?:\/\//i.test(p.image) ? p.image : `images/products/${p.image}`;
-      const img = el("img"); img.src = src; img.alt = p.name; img.loading = "lazy";
-      img.onerror = function(){ this.remove(); const ph = el("div","no-image"); ph.innerText = "No Image"; card.insertBefore(ph, card.firstChild); };
-      card.appendChild(img);
+      const src = /^https?:\/\//i.test(p.image) ? p.image : ('images/products/' + p.image);
+      const img = el("img"); img.src = src; img.alt = p.name; img.loading="lazy";
+      img.onerror = function(){ this.remove(); const ph = el("div","no-image"); ph.innerText = "No Image"; media.appendChild(ph); };
+      media.appendChild(img);
     } else {
-      const ph = el("div","no-image"); ph.innerText = "No Image"; card.appendChild(ph);
+      const ph = el("div","no-image"); ph.innerText = "No Image"; media.appendChild(ph);
     }
+    card.appendChild(media);
 
     const info = el("div");
     const title = el("h3"); title.innerText = p.name;
     const desc = el("p"); desc.className = "desc"; desc.innerText = p.description || "";
     const priceRow = el("div","price-row");
-    const final = (p.offer && p.offer > 0) ? p.offer : p.mrp;
-    if(p.offer && p.offer > 0){
+    const final = (p.offer && p.offer>0) ? p.offer : p.mrp;
+    if(p.offer && p.offer>0){
       const mrp = el("span","mrp"); mrp.innerText = "₹" + p.mrp;
       const off = el("span","offer"); off.innerText = "₹" + p.offer;
       priceRow.appendChild(mrp); priceRow.appendChild(off);
@@ -115,6 +115,7 @@ function renderFeatured(products){
       priceRow.appendChild(off);
     }
     info.appendChild(title); info.appendChild(desc); info.appendChild(priceRow);
+
     card.appendChild(info);
 
     const actions = el("div","card-actions");
@@ -123,8 +124,7 @@ function renderFeatured(products){
     actions.appendChild(view); actions.appendChild(add);
     card.appendChild(actions);
 
-    // clicking Add only adds; clicking anywhere else opens popup
-    card.addEventListener("click", (ev) => {
+    card.addEventListener("click", (ev)=>{
       if(ev.target === add){
         window.addToCart && window.addToCart({ id: p.id, name: p.name, price: final, qty:1, image: p.image || 'images/logo.png' });
         (window.showToast||(()=>{}))("Added to cart");
@@ -142,7 +142,6 @@ function renderFeatured(products){
 function initFeaturedBehavior(){
   const container = document.getElementById("featured-carousel");
   if(!container) return;
-  // reset
   container.style.transform = "";
   container.scrollLeft = 0;
   if(featuredInterval){ clearInterval(featuredInterval); featuredInterval = null; }
@@ -152,50 +151,40 @@ function initFeaturedBehavior(){
   const cards = Array.from(container.children);
   if(!cards.length) return;
 
-  // measure card and gap safely (in case layout not yet painted)
+  const gap = 14;
   const cardRect = cards[0].getBoundingClientRect();
-  const gap = 14; // CSS gap
   const step = Math.round(cardRect.width + gap);
 
   if(isMobile){
-    // Mobile: show 2 side-by-side, auto-scroll one-by-one, snap style
     container.style.flexDirection = "row";
     container.style.overflowX = "auto";
     container.style.scrollSnapType = "x mandatory";
-    // auto-advance by one card
     let idx = 0;
     featuredInterval = setInterval(()=> {
       idx = (idx + 1) % cards.length;
       cards[idx].scrollIntoView({ behavior: 'smooth', inline: 'start' });
     }, AUTO_MS);
-
-    // pause auto scroll on user interaction
-    container.addEventListener("touchstart", ()=> { if(featuredInterval){ clearInterval(featuredInterval); featuredInterval = null; } }, { once: true });
-
-    // render dots
+    container.addEventListener("touchstart", ()=> { if(featuredInterval){ clearInterval(featuredInterval); featuredInterval = null; } }, { once:true });
     renderFeaturedDots(container, cards, MOBILE_PER_VIEW);
     return;
   }
 
-  // Desktop: horizontal group-slide, arrows + dots + auto 3s
   container.style.flexDirection = "row";
   container.style.overflow = "hidden";
   const total = cards.length;
   let index = 0;
 
-  // build arrows if missing
   const wrap = document.getElementById("featured-carousel-wrap");
   if(wrap && !document.getElementById("featured-prev")){
     const controls = el("div","featured-controls");
-    const prev = el("button","featured-arrow"); prev.id = "featured-prev"; prev.type="button"; prev.innerText = "◀";
-    const next = el("button","featured-arrow"); next.id = "featured-next"; next.type="button"; next.innerText = "▶";
+    const prev = el("button","featured-arrow"); prev.id="featured-prev"; prev.type="button"; prev.innerText = "◀";
+    const next = el("button","featured-arrow"); next.id="featured-next"; next.type="button"; next.innerText = "▶";
     prev.onclick = ()=> { index = Math.max(0, index - perView); slideTo(index); };
     next.onclick = ()=> { index = Math.min(total - perView, index + perView); slideTo(index); };
     controls.appendChild(prev); controls.appendChild(next);
     wrap.insertBefore(controls, wrap.firstChild);
   }
 
-  // dots
   renderFeaturedDots(container, cards, perView);
 
   function slideTo(i){
@@ -205,17 +194,15 @@ function initFeaturedBehavior(){
     updateDots(index, perView);
   }
 
-  // auto slide groups
   featuredInterval = setInterval(()=> {
     const nextIndex = (index + perView) > (total - perView) ? 0 : index + perView;
     slideTo(nextIndex);
   }, AUTO_MS);
 
-  // pause on hover
   container.addEventListener("mouseenter", ()=> { if(featuredInterval){ clearInterval(featuredInterval); featuredInterval=null; } });
   container.addEventListener("mouseleave", ()=> { if(!featuredInterval) featuredInterval = setInterval(()=> { const nextIndex = (index + perView) > (total - perView) ? 0 : index + perView; slideTo(nextIndex); }, AUTO_MS); });
 
-  // mouse drag for desktop (simple)
+  // simple drag
   let isDown=false, startX=0;
   container.addEventListener('mousedown', (e)=> { isDown=true; startX = e.pageX; });
   container.addEventListener('mousemove', (e)=> { if(!isDown) return; const dx = e.pageX - startX; if(Math.abs(dx) > 40){ if(dx < 0) slideTo(index + 1); else slideTo(index - 1); isDown=false; } });
@@ -223,21 +210,18 @@ function initFeaturedBehavior(){
   container.addEventListener('mouseleave', ()=> { isDown=false; });
 }
 
-/* render dots helper */
+/* render dots */
 function renderFeaturedDots(container, cards, perViewOverride){
-  // remove existing dots area
   let dotsArea = document.getElementById("featured-dots");
   if(dotsArea) dotsArea.remove();
   const dotsWrap = el("div","featured-dots"); dotsWrap.id = "featured-dots";
   if(container.parentElement) container.parentElement.appendChild(dotsWrap);
-
   const perView = perViewOverride || MOBILE_PER_VIEW;
   const total = cards.length;
   const pages = Math.max(1, Math.ceil(total / perView));
   dotsWrap.innerHTML = "";
   for(let i=0;i<pages;i++){
-    const d = el("button","hero-dot");
-    d.type = "button";
+    const d = el("button","hero-dot"); d.type="button";
     d.onclick = ()=> {
       const idx = i * perView;
       const targetX = idx * (cards[0].getBoundingClientRect().width + 14);
@@ -246,10 +230,8 @@ function renderFeaturedDots(container, cards, perViewOverride){
     };
     dotsWrap.appendChild(d);
   }
-  // activate first
   updateDots(0, perView);
 }
-
 function updateDots(indexVal, perView){
   const dotsWrap = document.getElementById("featured-dots");
   if(!dotsWrap) return;
@@ -258,7 +240,7 @@ function updateDots(indexVal, perView){
   children.forEach((d,i)=> d.classList.toggle("active", i === page));
 }
 
-/* PRODUCT POPUP (clean safe string concatenation, no nested templates) */
+/* POPUP: exposes showProductPopup globally (home & products can use) */
 function createPopupIfMissing(){
   if(document.getElementById("product-popup")) return;
   const pop = el("div","product-popup"); pop.id = "product-popup";
@@ -284,7 +266,8 @@ function createPopupIfMissing(){
   pop.querySelector("#pp-close").addEventListener("click", hidePopup);
   pop.addEventListener("click", (e)=> { if(e.target === pop) hidePopup(); });
 }
-function showPopupNoImage(){ const media = document.querySelector(".popup-media"); if(!media) return; if(media.querySelector(".no-image")) { media.querySelector(".no-image").style.display="flex"; return; } const ph = el("div","no-image"); ph.style.height="340px"; ph.innerText="No Image"; media.appendChild(ph); }
+
+function showPopupNoImage(){ const media = document.querySelector(".popup-media"); if(!media) return; if(media.querySelector(".no-image")) { media.querySelector(".no-image").style.display="flex"; return; } const ph = el("div","no-image"); ph.style.height="100%"; ph.innerText="No Image"; media.appendChild(ph); }
 function removePopupNoImage(){ const ph = document.querySelector(".popup-media .no-image"); if(ph) ph.style.display="none"; }
 
 function showProductPopup(p){
@@ -301,23 +284,17 @@ function showProductPopup(p){
   document.getElementById("pp-name").innerText = p.name;
   document.getElementById("pp-desc").innerText = p.description || "";
   const final = (p.offer && p.offer>0) ? p.offer : p.mrp;
-
-  // safe string concat for price and optional MRP
   var priceHtml = "₹" + final;
-  if(p.offer && p.offer>0){
-    priceHtml += ' <span style="text-decoration:line-through;color:#999;margin-left:8px">₹' + p.mrp + '</span>';
-  }
+  if(p.offer && p.offer>0) priceHtml += ' <span style="text-decoration:line-through;color:#999;margin-left:8px">₹' + p.mrp + '</span>';
   document.getElementById("pp-price").innerHTML = priceHtml;
 
   const variantsWrap = document.getElementById("pp-variants");
   variantsWrap.innerHTML = "";
   if(!p.variants || !p.variants.length){
     variantsWrap.style.display = "none";
-    // bind add
     document.getElementById("pp-add").onclick = function(){
       window.addToCart && window.addToCart({ id: p.id, name: p.name, price: final, qty:1, image: p.image || 'images/logo.png' });
-      (window.showToast||(()=>{}))("Added to cart");
-      hidePopup();
+      (window.showToast||(()=>{}))("Added to cart"); hidePopup();
     };
   } else {
     variantsWrap.style.display = "flex";
@@ -327,34 +304,31 @@ function showProductPopup(p){
       if(i===0) b.classList.add("selected");
       b.addEventListener("click", ()=> {
         Array.from(variantsWrap.children).forEach(n=>n.classList.remove("selected"));
-        b.classList.add("selected");
-        selected = v;
+        b.classList.add("selected"); selected = v;
       });
       variantsWrap.appendChild(b);
     });
     document.getElementById("pp-add").onclick = function(){
       window.addToCart && window.addToCart({ id: p.id, name: (p.name + " (" + selected + ")"), price: final, qty:1, image: p.image || 'images/logo.png' });
-      (window.showToast||(()=>{}))("Added to cart");
-      hidePopup();
+      (window.showToast||(()=>{}))("Added to cart"); hidePopup();
     };
   }
 }
 
 function hidePopup(){ const pop = document.getElementById("product-popup"); if(pop){ pop.classList.remove("popup-show"); setTimeout(()=> pop.style.display="none", 260); } }
 
-/* INIT on DOM ready */
-document.addEventListener("DOMContentLoaded", async () => {
+/* INIT */
+document.addEventListener("DOMContentLoaded", async ()=>{
   initHero();
   const products = await fetchProducts();
   renderFeatured(products);
 
-  // Re-init on resize to recalc widths
   let resizeTimer = null;
   window.addEventListener("resize", ()=> {
     if(resizeTimer) clearTimeout(resizeTimer);
     resizeTimer = setTimeout(()=> { renderFeatured(products); }, 300);
   });
 
-  // expose showProductPopup globally for other pages/modules
+  // expose globally
   window.showProductPopup = showProductPopup;
 });
