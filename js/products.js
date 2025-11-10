@@ -1,4 +1,4 @@
-/* js/products.js — products grid + safe popup fallback */
+/* js/products.js — stable products grid + popup fallback */
 const CSV_URL_PRODUCTS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT15M2LZhCAW1EXXp1oRB9oFn5Enj2DvuReH7tlPPlq3rkSffsRy12r09TsmCLgapn4jG01U9bcv6-2/pub?output=csv";
 
 function el(t,c){ const e=document.createElement(t); if(c) e.className = c; return e; }
@@ -93,10 +93,10 @@ function renderProductCard(p){
       window.addToCart && window.addToCart({ id: p.id, name: p.name, price: priceToAdd, qty:1, image: p.image || 'images/logo.png' });
       (window.showToast||(()=>{}))("Added to cart"); return;
     }
-    // open popup: try global first, else local fallback
     if(typeof window.showProductPopup === "function"){
       window.showProductPopup(p);
     } else {
+      // fallback local popup if home didn't load
       showProductPopupLocal(p);
     }
   });
@@ -104,9 +104,8 @@ function renderProductCard(p){
   return card;
 }
 
-/* Local fallback popup in products.js if home.js didn't provide one */
+/* local fallback popup (same look as home) */
 function showProductPopupLocal(p){
-  // create popup if missing
   if(!document.getElementById("product-popup-local")){
     const pop = el("div","product-popup"); pop.id = "product-popup-local";
     pop.innerHTML = ''
@@ -127,25 +126,23 @@ function showProductPopupLocal(p){
       + '  </div>'
       + '</div>';
     document.body.appendChild(pop);
-    pop.querySelector(".popup-close").addEventListener("click", ()=> { hideLocalPopup(); });
-    pop.querySelector("#pp-close-local").addEventListener("click", ()=> { hideLocalPopup(); });
-    pop.addEventListener("click", (e)=>{ if(e.target === pop) hideLocalPopup(); });
+    pop.querySelector(".popup-close").addEventListener("click", ()=> hideLocalPopup());
+    pop.querySelector("#pp-close-local").addEventListener("click", ()=> hideLocalPopup());
+    pop.addEventListener("click", (e)=> { if(e.target === pop) hideLocalPopup(); });
   }
 
-  // populate
   const pop = document.getElementById("product-popup-local");
   pop.style.display = "flex"; pop.classList.add("popup-show");
   const img = document.getElementById("pp-img-local");
   if(p.image){
     img.src = /^https?:\/\//i.test(p.image) ? p.image : ('images/products/' + p.image);
     img.style.display = "block";
-    img.onerror = function(){ img.style.display='none'; const ph = document.querySelector("#product-popup-local .no-image"); if(ph) ph.style.display='flex'; };
-  } else { img.style.display='none'; }
+    img.onerror = function(){ img.style.display='none'; const ph = pop.querySelector(".no-image"); if(ph) ph.style.display='flex'; };
+  } else img.style.display='none';
   document.getElementById("pp-name-local").innerText = p.name;
   document.getElementById("pp-desc-local").innerText = p.description || "";
   const final = (p.offer && p.offer>0) ? p.offer : p.mrp;
   document.getElementById("pp-price-local").innerHTML = "₹" + final + ((p.offer && p.offer>0) ? (' <span style="text-decoration:line-through;color:#999;margin-left:8px">₹' + p.mrp + '</span>') : '');
-
   const variantsWrap = document.getElementById("pp-variants-local");
   variantsWrap.innerHTML = "";
   if(!p.variants || !p.variants.length){
@@ -184,15 +181,12 @@ async function renderProducts(){
     grid.innerHTML = "<div style='padding:18px;color:#666'>No products found in sheet.</div>";
     return;
   }
-
   function draw(list){
     grid.innerHTML = "";
-    list.forEach(p => { grid.appendChild(renderProductCard(p)); });
+    list.forEach(p => grid.appendChild(renderProductCard(p)));
   }
-
   draw(products);
-
-  // search hook
+  // search
   const input = document.getElementById("search-input");
   input.addEventListener("input", (e)=>{
     const q = e.target.value.trim().toLowerCase();
