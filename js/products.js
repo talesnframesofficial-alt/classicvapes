@@ -96,7 +96,6 @@ function renderProductCard(p){
     if(typeof window.showProductPopup === "function"){
       window.showProductPopup(p);
     } else {
-      // fallback local popup if home didn't load
       showProductPopupLocal(p);
     }
   });
@@ -104,7 +103,6 @@ function renderProductCard(p){
   return card;
 }
 
-/* local fallback popup (same look as home) */
 function showProductPopupLocal(p){
   if(!document.getElementById("product-popup-local")){
     const pop = el("div","product-popup"); pop.id = "product-popup-local";
@@ -130,7 +128,6 @@ function showProductPopupLocal(p){
     pop.querySelector("#pp-close-local").addEventListener("click", ()=> hideLocalPopup());
     pop.addEventListener("click", (e)=> { if(e.target === pop) hideLocalPopup(); });
   }
-
   const pop = document.getElementById("product-popup-local");
   pop.style.display = "flex"; pop.classList.add("popup-show");
   const img = document.getElementById("pp-img-local");
@@ -147,10 +144,7 @@ function showProductPopupLocal(p){
   variantsWrap.innerHTML = "";
   if(!p.variants || !p.variants.length){
     variantsWrap.style.display = "none";
-    document.getElementById("pp-add-local").onclick = function(){
-      window.addToCart && window.addToCart({ id: p.id, name: p.name, price: final, qty:1, image: p.image || 'images/logo.png' });
-      (window.showToast||(()=>{}))("Added to cart"); hideLocalPopup();
-    };
+    document.getElementById("pp-add-local").onclick = function(){ window.addToCart && window.addToCart({ id: p.id, name: p.name, price: final, qty:1, image: p.image || 'images/logo.png' }); (window.showToast||(()=>{}))("Added to cart"); hideLocalPopup(); };
   } else {
     variantsWrap.style.display = "flex";
     let selected = p.variants[0];
@@ -160,40 +154,21 @@ function showProductPopupLocal(p){
       b.addEventListener("click", ()=> { Array.from(variantsWrap.children).forEach(n=>n.classList.remove("selected")); b.classList.add("selected"); selected = v; });
       variantsWrap.appendChild(b);
     });
-    document.getElementById("pp-add-local").onclick = function(){
-      window.addToCart && window.addToCart({ id: p.id, name: (p.name + " (" + selected + ")"), price: final, qty:1, image: p.image || 'images/logo.png' });
-      (window.showToast||(()=>{}))("Added to cart"); hideLocalPopup();
-    };
+    document.getElementById("pp-add-local").onclick = function(){ window.addToCart && window.addToCart({ id: p.id, name: (p.name + " (" + selected + ")"), price: final, qty:1, image: p.image || 'images/logo.png' }); (window.showToast||(()=>{}))("Added to cart"); hideLocalPopup(); };
   }
 }
 
-function hideLocalPopup(){
-  const pop = document.getElementById("product-popup-local");
-  if(pop){ pop.classList.remove("popup-show"); setTimeout(()=> pop.style.display="none", 260); }
-}
+function hideLocalPopup(){ const pop = document.getElementById("product-popup-local"); if(pop){ pop.classList.remove("popup-show"); setTimeout(()=> pop.style.display="none", 260); } }
 
 /* RENDER */
 async function renderProducts(){
   const grid = ensureProductsGrid();
   grid.innerHTML = "<div style='padding:18px;color:#666'>Loading products...</div>";
   const products = await fetchAllProducts();
-  if(!products.length){
-    grid.innerHTML = "<div style='padding:18px;color:#666'>No products found in sheet.</div>";
-    return;
-  }
-  function draw(list){
-    grid.innerHTML = "";
-    list.forEach(p => grid.appendChild(renderProductCard(p)));
-  }
+  if(!products.length){ grid.innerHTML = "<div style='padding:18px;color:#666'>No products found in sheet.</div>"; return; }
+  function draw(list){ grid.innerHTML = ""; list.forEach(p => grid.appendChild(renderProductCard(p))); }
   draw(products);
-  // search
   const input = document.getElementById("search-input");
-  input.addEventListener("input", (e)=>{
-    const q = e.target.value.trim().toLowerCase();
-    if(!q) return draw(products);
-    const filtered = products.filter(p => (p.name||"").toLowerCase().includes(q) || (p.description||"").toLowerCase().includes(q));
-    draw(filtered);
-  });
+  input.addEventListener("input", (e)=>{ const q = e.target.value.trim().toLowerCase(); if(!q) return draw(products); const filtered = products.filter(p => (p.name||"").toLowerCase().includes(q) || (p.description||"").toLowerCase().includes(q)); draw(filtered); });
 }
-
 document.addEventListener("DOMContentLoaded", renderProducts);
