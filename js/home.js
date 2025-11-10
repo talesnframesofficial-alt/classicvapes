@@ -1,4 +1,4 @@
-/* js/home.js — featured + hero + popup (fixed) */
+/* js/home.js — featured + hero + popup (stable, waits images) */
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT15M2LZhCAW1EXXp1oRB9oFn5Enj2DvuReH7tlPPlq3rkSffsRy12r09TsmCLgapn4jG01U9bcv6-2/pub?output=csv";
 const AUTO_MS = 3000;
 const MOBILE_VIEW_BREAK = 900;
@@ -70,10 +70,20 @@ function initHero(){
   }
 }
 
+/* WAIT FOR IMAGES helper */
+function imagesLoaded(container){
+  const imgs = Array.from(container.querySelectorAll("img"));
+  if(!imgs.length) return Promise.resolve();
+  return Promise.all(imgs.map(img => {
+    if(img.complete) return Promise.resolve();
+    return new Promise(res => { img.addEventListener("load", res); img.addEventListener("error", res); });
+  }));
+}
+
 /* FEATURED */
 let featuredInterval = null;
 
-function renderFeatured(products){
+async function renderFeatured(products){
   let container = document.getElementById("featured-carousel");
   if(!container){
     const wrap = document.getElementById("featured-carousel-wrap") || document.body;
@@ -89,7 +99,6 @@ function renderFeatured(products){
 
   featured.forEach(p=>{
     const card = el("div","product-card");
-    // media wrapper (square)
     const media = el("div","product-media");
     if(p.image){
       const src = /^https?:\/\//i.test(p.image) ? p.image : ('images/products/' + p.image);
@@ -115,7 +124,6 @@ function renderFeatured(products){
       priceRow.appendChild(off);
     }
     info.appendChild(title); info.appendChild(desc); info.appendChild(priceRow);
-
     card.appendChild(info);
 
     const actions = el("div","card-actions");
@@ -136,6 +144,8 @@ function renderFeatured(products){
     container.appendChild(card);
   });
 
+  // wait images loaded before calculating sizes
+  await imagesLoaded(container);
   initFeaturedBehavior();
 }
 
@@ -151,11 +161,12 @@ function initFeaturedBehavior(){
   const cards = Array.from(container.children);
   if(!cards.length) return;
 
-  const gap = 14;
+  const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 14;
   const cardRect = cards[0].getBoundingClientRect();
   const step = Math.round(cardRect.width + gap);
 
   if(isMobile){
+    // mobile: horizontal scroll snap; auto-advance one card at a time
     container.style.flexDirection = "row";
     container.style.overflowX = "auto";
     container.style.scrollSnapType = "x mandatory";
@@ -169,22 +180,14 @@ function initFeaturedBehavior(){
     return;
   }
 
+  // desktop: auto-group slides and loop back
   container.style.flexDirection = "row";
   container.style.overflow = "hidden";
   const total = cards.length;
   let index = 0;
 
-  const wrap = document.getElementById("featured-carousel-wrap");
-  if(wrap && !document.getElementById("featured-prev")){
-    const controls = el("div","featured-controls");
-    const prev = el("button","featured-arrow"); prev.id="featured-prev"; prev.type="button"; prev.innerText = "◀";
-    const next = el("button","featured-arrow"); next.id="featured-next"; next.type="button"; next.innerText = "▶";
-    prev.onclick = ()=> { index = Math.max(0, index - perView); slideTo(index); };
-    next.onclick = ()=> { index = Math.min(total - perView, index + perView); slideTo(index); };
-    controls.appendChild(prev); controls.appendChild(next);
-    wrap.insertBefore(controls, wrap.firstChild);
-  }
-
+  // remove prev/next if exist and not wanted; we only need auto scroll (as requested A)
+  // dots
   renderFeaturedDots(container, cards, perView);
 
   function slideTo(i){
@@ -194,15 +197,17 @@ function initFeaturedBehavior(){
     updateDots(index, perView);
   }
 
+  // auto slide groups; when reaching end, reset back to 0 (smooth)
   featuredInterval = setInterval(()=> {
     const nextIndex = (index + perView) > (total - perView) ? 0 : index + perView;
     slideTo(nextIndex);
   }, AUTO_MS);
 
+  // pause on hover
   container.addEventListener("mouseenter", ()=> { if(featuredInterval){ clearInterval(featuredInterval); featuredInterval=null; } });
   container.addEventListener("mouseleave", ()=> { if(!featuredInterval) featuredInterval = setInterval(()=> { const nextIndex = (index + perView) > (total - perView) ? 0 : index + perView; slideTo(nextIndex); }, AUTO_MS); });
 
-  // simple drag
+  // simple drag support (optional)
   let isDown=false, startX=0;
   container.addEventListener('mousedown', (e)=> { isDown=true; startX = e.pageX; });
   container.addEventListener('mousemove', (e)=> { if(!isDown) return; const dx = e.pageX - startX; if(Math.abs(dx) > 40){ if(dx < 0) slideTo(index + 1); else slideTo(index - 1); isDown=false; } });
@@ -210,7 +215,7 @@ function initFeaturedBehavior(){
   container.addEventListener('mouseleave', ()=> { isDown=false; });
 }
 
-/* render dots */
+/* dots */
 function renderFeaturedDots(container, cards, perViewOverride){
   let dotsArea = document.getElementById("featured-dots");
   if(dotsArea) dotsArea.remove();
@@ -224,7 +229,7 @@ function renderFeaturedDots(container, cards, perViewOverride){
     const d = el("button","hero-dot"); d.type="button";
     d.onclick = ()=> {
       const idx = i * perView;
-      const targetX = idx * (cards[0].getBoundingClientRect().width + 14);
+      const targetX = idx * (cards[0].getBoundingClientRect().width + (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 14));
       container.style.transform = "translateX(-" + targetX + "px)";
       updateDots(idx, perView);
     };
@@ -240,7 +245,7 @@ function updateDots(indexVal, perView){
   children.forEach((d,i)=> d.classList.toggle("active", i === page));
 }
 
-/* POPUP: exposes showProductPopup globally (home & products can use) */
+/* POPUP (expose global) */
 function createPopupIfMissing(){
   if(document.getElementById("product-popup")) return;
   const pop = el("div","product-popup"); pop.id = "product-popup";
@@ -321,12 +326,12 @@ function hidePopup(){ const pop = document.getElementById("product-popup"); if(p
 document.addEventListener("DOMContentLoaded", async ()=>{
   initHero();
   const products = await fetchProducts();
-  renderFeatured(products);
+  await renderFeatured(products);
 
   let resizeTimer = null;
   window.addEventListener("resize", ()=> {
     if(resizeTimer) clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(()=> { renderFeatured(products); }, 300);
+    resizeTimer = setTimeout(()=> { renderFeatured(products); }, 350);
   });
 
   // expose globally
