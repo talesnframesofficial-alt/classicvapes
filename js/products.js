@@ -1,4 +1,6 @@
-/* js/products.js — stable products grid + popup fallback */
+/* js/products.js — products grid + popup fallback
+   Grid: mobile portrait 2, mobile landscape 4, tablet 4, desktop 6
+*/
 const CSV_URL_PRODUCTS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT15M2LZhCAW1EXXp1oRB9oFn5Enj2DvuReH7tlPPlq3rkSffsRy12r09TsmCLgapn4jG01U9bcv6-2/pub?output=csv";
 
 function el(t,c){ const e=document.createElement(t); if(c) e.className = c; return e; }
@@ -160,7 +162,7 @@ function showProductPopupLocal(p){
 
 function hideLocalPopup(){ const pop = document.getElementById("product-popup-local"); if(pop){ pop.classList.remove("popup-show"); setTimeout(()=> pop.style.display="none", 260); } }
 
-/* RENDER */
+/* RENDER grid */
 async function renderProducts(){
   const grid = ensureProductsGrid();
   grid.innerHTML = "<div style='padding:18px;color:#666'>Loading products...</div>";
