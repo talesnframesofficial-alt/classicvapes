@@ -1,6 +1,6 @@
-/* js/home.js — featured + hero + popup (stable, waits images) */
+/* js/home.js — stable featured + hero + popup (auto 3s, mobile auto stops on touch) */
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT15M2LZhCAW1EXXp1oRB9oFn5Enj2DvuReH7tlPPlq3rkSffsRy12r09TsmCLgapn4jG01U9bcv6-2/pub?output=csv";
-const AUTO_MS = 3000;
+const AUTO_MS = 3000; // 3 seconds
 const MOBILE_VIEW_BREAK = 900;
 const MOBILE_PER_VIEW = 2;
 const DESKTOP_PER_VIEW = 4;
@@ -70,7 +70,7 @@ function initHero(){
   }
 }
 
-/* WAIT FOR IMAGES helper */
+/* images loaded helper */
 function imagesLoaded(container){
   const imgs = Array.from(container.querySelectorAll("img"));
   if(!imgs.length) return Promise.resolve();
@@ -82,6 +82,7 @@ function imagesLoaded(container){
 
 /* FEATURED */
 let featuredInterval = null;
+let featuredUserTouched = false;
 
 async function renderFeatured(products){
   let container = document.getElementById("featured-carousel");
@@ -144,7 +145,6 @@ async function renderFeatured(products){
     container.appendChild(card);
   });
 
-  // wait images loaded before calculating sizes
   await imagesLoaded(container);
   initFeaturedBehavior();
 }
@@ -155,6 +155,7 @@ function initFeaturedBehavior(){
   container.style.transform = "";
   container.scrollLeft = 0;
   if(featuredInterval){ clearInterval(featuredInterval); featuredInterval = null; }
+  featuredUserTouched = false;
 
   const isMobile = window.innerWidth < MOBILE_VIEW_BREAK;
   const perView = isMobile ? MOBILE_PER_VIEW : DESKTOP_PER_VIEW;
@@ -166,28 +167,30 @@ function initFeaturedBehavior(){
   const step = Math.round(cardRect.width + gap);
 
   if(isMobile){
-    // mobile: horizontal scroll snap; auto-advance one card at a time
     container.style.flexDirection = "row";
     container.style.overflowX = "auto";
     container.style.scrollSnapType = "x mandatory";
+
     let idx = 0;
     featuredInterval = setInterval(()=> {
+      if(featuredUserTouched) return;
       idx = (idx + 1) % cards.length;
       cards[idx].scrollIntoView({ behavior: 'smooth', inline: 'start' });
     }, AUTO_MS);
-    container.addEventListener("touchstart", ()=> { if(featuredInterval){ clearInterval(featuredInterval); featuredInterval = null; } }, { once:true });
+
+    // if user touches/swipes, stop auto scroll (choice B)
+    container.addEventListener("touchstart", ()=> { featuredUserTouched = true; if(featuredInterval){ clearInterval(featuredInterval); featuredInterval = null; } }, { passive:true });
+
     renderFeaturedDots(container, cards, MOBILE_PER_VIEW);
     return;
   }
 
-  // desktop: auto-group slides and loop back
+  // Desktop: auto group slide, loop back
   container.style.flexDirection = "row";
   container.style.overflow = "hidden";
   const total = cards.length;
   let index = 0;
 
-  // remove prev/next if exist and not wanted; we only need auto scroll (as requested A)
-  // dots
   renderFeaturedDots(container, cards, perView);
 
   function slideTo(i){
@@ -197,17 +200,15 @@ function initFeaturedBehavior(){
     updateDots(index, perView);
   }
 
-  // auto slide groups; when reaching end, reset back to 0 (smooth)
   featuredInterval = setInterval(()=> {
     const nextIndex = (index + perView) > (total - perView) ? 0 : index + perView;
     slideTo(nextIndex);
   }, AUTO_MS);
 
-  // pause on hover
   container.addEventListener("mouseenter", ()=> { if(featuredInterval){ clearInterval(featuredInterval); featuredInterval=null; } });
   container.addEventListener("mouseleave", ()=> { if(!featuredInterval) featuredInterval = setInterval(()=> { const nextIndex = (index + perView) > (total - perView) ? 0 : index + perView; slideTo(nextIndex); }, AUTO_MS); });
 
-  // simple drag support (optional)
+  // simple drag
   let isDown=false, startX=0;
   container.addEventListener('mousedown', (e)=> { isDown=true; startX = e.pageX; });
   container.addEventListener('mousemove', (e)=> { if(!isDown) return; const dx = e.pageX - startX; if(Math.abs(dx) > 40){ if(dx < 0) slideTo(index + 1); else slideTo(index - 1); isDown=false; } });
@@ -215,7 +216,7 @@ function initFeaturedBehavior(){
   container.addEventListener('mouseleave', ()=> { isDown=false; });
 }
 
-/* dots */
+/* dots helpers */
 function renderFeaturedDots(container, cards, perViewOverride){
   let dotsArea = document.getElementById("featured-dots");
   if(dotsArea) dotsArea.remove();
@@ -245,7 +246,7 @@ function updateDots(indexVal, perView){
   children.forEach((d,i)=> d.classList.toggle("active", i === page));
 }
 
-/* POPUP (expose global) */
+/* POPUP (exposed globally) */
 function createPopupIfMissing(){
   if(document.getElementById("product-popup")) return;
   const pop = el("div","product-popup"); pop.id = "product-popup";
@@ -285,38 +286,27 @@ function showProductPopup(p){
     img.onerror = function(){ img.style.display='none'; showPopupNoImage(); };
     removePopupNoImage();
   } else { img.style.display='none'; showPopupNoImage(); }
-
   document.getElementById("pp-name").innerText = p.name;
   document.getElementById("pp-desc").innerText = p.description || "";
   const final = (p.offer && p.offer>0) ? p.offer : p.mrp;
   var priceHtml = "₹" + final;
   if(p.offer && p.offer>0) priceHtml += ' <span style="text-decoration:line-through;color:#999;margin-left:8px">₹' + p.mrp + '</span>';
   document.getElementById("pp-price").innerHTML = priceHtml;
-
   const variantsWrap = document.getElementById("pp-variants");
   variantsWrap.innerHTML = "";
   if(!p.variants || !p.variants.length){
     variantsWrap.style.display = "none";
-    document.getElementById("pp-add").onclick = function(){
-      window.addToCart && window.addToCart({ id: p.id, name: p.name, price: final, qty:1, image: p.image || 'images/logo.png' });
-      (window.showToast||(()=>{}))("Added to cart"); hidePopup();
-    };
+    document.getElementById("pp-add").onclick = function(){ window.addToCart && window.addToCart({ id: p.id, name: p.name, price: final, qty:1, image: p.image || 'images/logo.png' }); (window.showToast||(()=>{}))("Added to cart"); hidePopup(); };
   } else {
     variantsWrap.style.display = "flex";
     let selected = p.variants[0];
     p.variants.forEach((v,i)=> {
       const b = el("button","variant-btn"); b.type="button"; b.innerText = v;
       if(i===0) b.classList.add("selected");
-      b.addEventListener("click", ()=> {
-        Array.from(variantsWrap.children).forEach(n=>n.classList.remove("selected"));
-        b.classList.add("selected"); selected = v;
-      });
+      b.addEventListener("click", ()=> { Array.from(variantsWrap.children).forEach(n=>n.classList.remove("selected")); b.classList.add("selected"); selected = v; });
       variantsWrap.appendChild(b);
     });
-    document.getElementById("pp-add").onclick = function(){
-      window.addToCart && window.addToCart({ id: p.id, name: (p.name + " (" + selected + ")"), price: final, qty:1, image: p.image || 'images/logo.png' });
-      (window.showToast||(()=>{}))("Added to cart"); hidePopup();
-    };
+    document.getElementById("pp-add").onclick = function(){ window.addToCart && window.addToCart({ id: p.id, name: (p.name + " (" + selected + ")"), price: final, qty:1, image: p.image || 'images/logo.png' }); (window.showToast||(()=>{}))("Added to cart"); hidePopup(); };
   }
 }
 
@@ -327,13 +317,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
   initHero();
   const products = await fetchProducts();
   await renderFeatured(products);
-
   let resizeTimer = null;
-  window.addEventListener("resize", ()=> {
-    if(resizeTimer) clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(()=> { renderFeatured(products); }, 350);
-  });
-
-  // expose globally
+  window.addEventListener("resize", ()=> { if(resizeTimer) clearTimeout(resizeTimer); resizeTimer = setTimeout(()=> { renderFeatured(products); }, 350); });
   window.showProductPopup = showProductPopup;
 });
