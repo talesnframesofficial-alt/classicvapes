@@ -148,3 +148,46 @@ body {
     padding: 14px;
   }
 }
+/* Fix dropdown UI */
+.checkout-form select,
+.checkout-form input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1.5px solid #ddd;
+  font-size: 15px;
+  font-family: 'Poppins',sans-serif;
+  background: #fff;
+  appearance: none;
+  transition: 0.2s;
+}
+
+.checkout-form select:focus,
+.checkout-form input:focus {
+  border-color: #7a5af8;
+  box-shadow: 0 0 0 3px rgba(122,90,248,0.15);
+  outline: none;
+}
+
+/* Mobile spacing improvements */
+@media(max-width:800px){
+  .checkout-form input,
+  .checkout-form select{
+    font-size:16px;
+    padding:16px;
+  }
+  #upi-qr{
+    width:180px;
+    height:180px;
+    border-radius:20px;
+  }
+}
+
+/* iPad optimization */
+@media(max-width:1024px){
+  #upi-qr{
+    width:200px;
+    height:200px;
+    border-radius:22px;
+  }
+}
