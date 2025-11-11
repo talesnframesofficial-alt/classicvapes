@@ -1,79 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Checkout - Classic Vapes</title>
-  <link rel="stylesheet" href="css/styles.css" />
-  <link rel="stylesheet" href="css/checkout.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout – ClassicVapes</title>
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <!-- Loader -->
-  <div id="preloader">
-    <img src="images/logo.png" alt="Loading..." />
-  </div>
 
-  <!-- Header -->
-  <header>
-    <a href="index.html"><img src="images/logo.png" alt="Logo" class="logo" /></a>
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="products.html">Products</a>
-    </nav>
+  <header class="top-header">
+    <div class="header-left">
+      <a href="index.html"><img src="images/logo.png" class="logo" alt="ClassicVapes"></a>
+    </div>
+    <div class="header-right">
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="products.html">Products</a>
+        <a href="checkout.html">Checkout</a>
+      </nav>
+      <button class="cart-btn" onclick="toggleCart()" aria-label="Open cart">
+        <svg viewBox="0 0 24 24" class="cart-icon" width="22" height="22"><path d="M7 4h-2l-3 9v2h2l1 5h14l1-5h2v-2l-3-9h-2m-2 0h-6m-1 0l-1 3h10l-1-3m-7 7h10l1 4h-12l1-4zm2 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" fill="currentColor"/></svg>
+        <span id="cart-count">0</span>
+      </button>
+      <button class="hamburger" aria-label="Menu" onclick="document.body.classList.toggle('nav-open')">☰</button>
+    </div>
   </header>
 
-  <section class="checkout-wrapper">
-    <h1>Checkout</h1>
+  <main class="checkout-page" style="padding:20px 14px; max-width:600px; margin:40px auto;">
+    <h2>Checkout</h2>
 
-    <div class="checkout-container">
-      <!-- Left: Customer Info -->
-      <div class="checkout-left">
-        <h2>Customer Information</h2>
-        <form id="checkout-form">
-          <label>Full Name</label>
-          <input type="text" id="name" required>
+    <form id="checkout-form">
+      <fieldset style="border:none;padding:0;margin:0">
+        <legend style="font-size:1rem;font-weight:600;margin-bottom:12px">Customer Details</legend>
+        <input type="text" id="name" placeholder="Full Name" required>
+        <input type="tel" id="phone" placeholder="Phone (10 digits)" required pattern="\d{10}">
+        <input type="text" id="house" placeholder="House / Street Address" required>
+        <input type="text" id="city" placeholder="City" required>
+        <select id="state" required>
+          <option value="">Select State</option>
+          <!-- Indian States list -->
+          <option value="Andhra Pradesh">Andhra Pradesh</option>
+          <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+          <option value="Assam">Assam</option>
+          <option value="Bihar">Bihar</option>
+          <option value="Chhattisgarh">Chhattisgarh</option>
+          <option value="Goa">Goa</option>
+          <option value="Gujarat">Gujarat</option>
+          <option value="Haryana">Haryana</option>
+          <option value="Himachal Pradesh">Himachal Pradesh</option>
+          <option value="Jharkhand">Jharkhand</option>
+          <option value="Karnataka">Karnataka</option>
+          <option value="Kerala">Kerala</option>
+          <option value="Madhya Pradesh">Madhya Pradesh</option>
+          <option value="Maharashtra">Maharashtra</option>
+          <option value="Manipur">Manipur</option>
+          <option value="Meghalaya">Meghalaya</option>
+          <option value="Mizoram">Mizoram</option>
+          <option value="Nagaland">Nagaland</option>
+          <option value="Odisha">Odisha</option>
+          <option value="Punjab">Punjab</option>
+          <option value="Rajasthan">Rajasthan</option>
+          <option value="Sikkim">Sikkim</option>
+          <option value="Tamil Nadu">Tamil Nadu</option>
+          <option value="Telangana">Telangana</option>
+          <option value="Tripura">Tripura</option>
+          <option value="Uttarakhand">Uttarakhand</option>
+          <option value="Uttar Pradesh">Uttar Pradesh</option>
+          <option value="West Bengal">West Bengal</option>
+        </select>
+        <input type="text" id="pincode" placeholder="Pincode" required pattern="\d{6}">
+      </fieldset>
 
-          <label>Email</label>
-          <input type="email" id="email" required>
-
-          <label>Phone</label>
-          <input type="tel" id="phone" required>
-
-          <label>Address</label>
-          <textarea id="address" required></textarea>
-
-          <label>City</label>
-          <input type="text" id="city" required>
-
-          <label>State</label>
-          <input type="text" id="state" required>
-
-          <label>Pincode</label>
-          <input type="text" id="pincode" required>
-
-          <label>Payment Method</label>
-          <select id="payment" required>
-            <option value="UPI">UPI</option>
-            <option value="COD">Cash on Delivery</option>
-          </select>
-        </form>
+      <div id="order-summary" style="margin:24px 0;">
+        <h3>Order Summary</h3>
+        <div id="summary-items"></div>
+        <p style="font-weight:600;">Total: ₹<span id="summary-total">0</span></p>
       </div>
 
-      <!-- Right: Order Summary -->
-      <div class="checkout-right">
-        <h2>Order Summary</h2>
-        <div id="order-items"></div>
-        <p class="total-line">Total: <strong id="order-total">₹0.00</strong></p>
-        <button id="place-order" class="checkout-btn">Place Order</button>
-        <p id="order-msg"></p>
+      <div id="upi-section" style="margin:24px 0;text-align:center">
+        <h3>Pay via UPI</h3>
+        <img src="images/upi-qr.png" alt="UPI QR Code" style="max-width:260px;width:100%;margin-bottom:12px">
+        <p>Pay using UPI ID: <strong>zerabathool4@oksbi</strong></p>
+        <div style="display:flex;gap:12px;justify-content:center;margin-top:12px">
+          <button type="button" class="buy-btn" id="gpay-btn">GPay</button>
+          <button type="button" class="buy-btn" id="phonepe-btn">PhonePe</button>
+          <button type="button" class="buy-btn" id="paytm-btn">PayTM</button>
+        </div>
       </div>
-    </div>
-  </section>
 
-  <footer>
-    <p>© 2025 Classic Vapes. All rights reserved.</p>
+      <input type="text" id="txn-id" placeholder="Transaction ID (UPI app)" required style="width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;margin-bottom:20px">
+      <button type="submit" class="checkout-btn">I HAVE PAID</button>
+
+      <p id="checkout-msg" style="text-align:center;padding:12px 0;color:#666"></p>
+    </form>
+  </main>
+
+  <footer class="site-footer">
+    <div>📩 Contact us: <a href="mailto:classicvapes@gmail.com">classicvapes@gmail.com</a></div>
+    <div>📸 Instagram: <a href="https://instagram.com/classicvapes" target="_blank">@classicvapes</a></div>
   </footer>
 
-  <script src="js/checkout.js"></script>
+  <script src="js/cart.js" defer></script>
+  <script src="js/checkout.js" defer></script>
 </body>
 </html>
