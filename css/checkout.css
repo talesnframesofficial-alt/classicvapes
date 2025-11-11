@@ -1,76 +1,150 @@
-.checkout-wrapper {
-  padding: 40px 10%;
+/* =========================================
+   CHECKOUT PAGE – PREMIUM STYLES
+   ========================================= */
+
+body {
+  background: #fafafa;
+  font-family: "Poppins", sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
+/* Layout container */
 .checkout-container {
-  display: flex;
-  gap: 40px;
-  flex-wrap: wrap;
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
 }
 
-.checkout-left, .checkout-right {
-  flex: 1;
+/* Order Summary */
+.order-summary {
   background: #fff;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-.checkout-left label {
-  display: block;
-  margin-top: 12px;
+.order-summary h2 {
+  font-size: 22px;
   font-weight: 600;
+  margin-bottom: 10px;
 }
 
-.checkout-left input, .checkout-left textarea, .checkout-left select {
-  width: 100%;
-  padding: 10px;
-  margin-top: 6px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 0.95rem;
-}
-
-.checkout-btn {
-  width: 100%;
-  margin-top: 20px;
-  padding: 12px;
-  font-size: 1rem;
-  background: linear-gradient(45deg,#ff6a00,#ee0979);
-  border: none;
-  border-radius: 30px;
-  color: #fff;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.checkout-btn:hover {
-  transform: scale(1.03);
-}
-
-.checkout-item {
+/* Product row in summary */
+.order-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 0;
-  border-bottom: 1px solid #eee;
+  margin: 12px 0;
+  font-size: 15px;
 }
 
-.checkout-item .remove {
-  background: none;
+/* Square rounded product images */
+.order-item img {
+  width: 55px;
+  height: 55px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-right: 12px;
+}
+
+/* UPI QR Box */
+.upi-box {
+  background: #fff;
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  text-align: center;
+  margin: 25px 0;
+}
+
+.upi-box img {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  border-radius: 14px;
+  margin-bottom: 12px;
+}
+
+.upi-box p {
+  font-weight: 500;
+  font-size: 15px;
+  color: #444;
+}
+
+/* Form Fields */
+.checkout-form input,
+.checkout-form textarea {
+  width: 100%;
+  padding: 14px;
+  border: 1.5px solid #eee;
+  border-radius: 12px;
+  margin-top: 6px;
+  font-size: 15px;
+  background: #fff;
+  transition: 0.3s;
+}
+
+.checkout-form input:focus,
+.checkout-form textarea:focus {
+  outline: none;
+  border-color: #ff6a90;
+  box-shadow: 0 0 8px rgba(255,106,144,0.3);
+}
+
+/* Premium Gradient Button (Orange → Pink) */
+.btn-primary {
+  width: 100%;
+  padding: 15px;
   border: none;
-  color: red;
-  font-size: 1.2rem;
-  cursor: pointer;
-}
-
-.total-line {
-  margin-top: 15px;
-  font-size: 1.1rem;
+  border-radius: 14px;
+  font-size: 17px;
   font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #ff7a18, #ff3cac);
+  color: #fff;
+  transition: 0.3s ease;
+  box-shadow: 0 4px 14px rgba(255,58,150,0.3);
+  margin-top: 15px;
 }
 
-#order-msg {
-  margin-top: 10px;
-  font-size: 0.95rem;
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(255,58,150,0.4);
+}
+
+/* Footer Styling */
+.checkout-footer {
+  text-align: center;
+  background: #111;
+  color: #fff;
+  padding: 18px 15px;
+  margin-top: 30px;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  font-size: 14px;
+}
+
+/* Mobile View Tweaks */
+@media (max-width: 600px) {
+  .checkout-container {
+    padding: 14px;
+  }
+
+  .order-summary,
+  .upi-box {
+    padding: 16px;
+  }
+
+  .order-item img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .btn-primary {
+    font-size: 16px;
+    padding: 14px;
+  }
 }
