@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Your Orders — ClassicVapes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/checkout.css"> <!-- re-using checkout card styles -->
+  <style>
+    /* small tweaks for orders list */
+    .orders-wrap { max-width:1000px;margin:26px auto;padding:12px; }
+    .order-row{ display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #eee;gap:12px }
+    .order-left{ display:flex;flex-direction:column }
+    .order-meta{ color:#666;font-size:13px;margin-top:6px }
+    .status-pill{ padding:6px 10px;border-radius:999px;font-weight:700 }
+    .status-Pending{ background:#fff3e0;color:#b55a00;border:1px solid rgba(181,90,0,0.08) }
+    .status-Verified{ background:#e6f7ee;color:#0a8a45;border:1px solid rgba(10,138,69,0.08) }
+    .status-Failed{ background:#ffe8ea;color:#b30f2f;border:1px solid rgba(179,15,47,0.08) }
+    .small-btn{ padding:8px 10px;border-radius:10px;border:none;cursor:pointer }
+  </style>
+</head>
+<body>
+<header class="top-header">
+  <div class="header-left"><a href="index.html"><img src="images/logo.png" class="logo" alt="ClassicVapes"></a></div>
+  <div class="header-right"><nav class="nav-links"><a href="index.html">Home</a><a href="products.html">Products</a><a href="checkout.html">Checkout</a></nav></div>
+</header>
+
+<main class="orders-wrap">
+  <h1>Your Orders</h1>
+  <div style="margin:10px 0 16px">
+    <input id="orders-search" placeholder="Search order id / phone / product name" style="width:100%;padding:10px;border-radius:10px;border:1px solid #e6e6e6">
+  </div>
+
+  <div id="orders-list"></div>
+</main>
+
+<footer class="checkout-footer">
+  <p>Contact: classicvapes@gmail.com</p>
+</footer>
+
+<script src="js/orders.js" defer></script>
+</body>
+</html>
