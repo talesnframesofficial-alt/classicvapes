@@ -1,132 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Checkout | Classic Vapes</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Checkout — ClassicVapes</title>
 
-  <!-- fonts & styles -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/checkout.css">
 </head>
-
 <body>
 
 <header class="top-header">
   <div class="header-left">
-    <a href="index.html"><img src="images/logo.png" class="logo" alt="Logo"></a>
+    <a href="index.html"><img src="images/logo.png" class="logo" alt="ClassicVapes"></a>
   </div>
   <div class="header-right">
     <nav class="nav-links">
       <a href="index.html">Home</a>
       <a href="products.html">Products</a>
-      <a href="checkout.html">Checkout</a>
+      <a href="checkout.html" aria-current="page">Checkout</a>
     </nav>
   </div>
 </header>
 
-<div class="checkout-container">
+<main class="checkout-container" aria-labelledby="checkout-heading">
+  <h1 id="checkout-heading" style="text-align:center;margin:18px 0 8px">Checkout</h1>
 
-  <!-- ORDER SUMMARY -->
-  <div class="order-summary">
+  <!-- Order summary -->
+  <section class="order-summary" aria-label="Order summary">
     <h2>Order Summary</h2>
-    <div id="order-items"></div>
-    <h3>Total: ₹<span id="order-total">0</span></h3>
+    <div id="order-items" aria-live="polite"></div>
+    <h3 style="margin-top:12px">Total: ₹<span id="order-total">0</span></h3>
+  </section>
+
+  <!-- UPI / Payment -->
+  <section class="upi-box" aria-label="UPI payment">
+    <h3>Pay via UPI</h3>
+    <img id="upi-qr" src="images/qr.png" alt="UPI QR code">
+    <p style="margin-top:12px">UPI ID: <strong id="upi-id">zerabathool4@oksbi</strong></p>
+
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+      <button id="gpay-btn" class="btn-primary" style="padding:10px 16px;width:auto">Open GPay</button>
+      <button id="phonepe-btn" class="btn-primary" style="padding:10px 16px;width:auto">Open PhonePe</button>
+      <button id="paytm-btn" class="btn-primary" style="padding:10px 16px;width:auto">Open PayTM</button>
+    </div>
+  </section>
+
+  <!-- Checkout form -->
+  <section class="checkout-form" aria-label="Customer details" style="margin-top:16px">
+    <input type="text" id="cus-name" placeholder="Full name" autocomplete="name" required>
+    <input type="tel" id="cus-phone" placeholder="Mobile (10 digits)" inputmode="numeric" maxlength="10" required>
+    <!-- Address line + City combined -->
+    <input type="text" id="cus-address-line" placeholder="House / Street / Locality" required>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+      <select id="cus-state" required style="flex:1">
+        <option value="">Select State</option>
+        <option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option>
+        <option>Bihar</option><option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option>
+        <option>Haryana</option><option>Himachal Pradesh</option><option>Jharkhand</option>
+        <option>Karnataka</option><option>Kerala</option><option>Madhya Pradesh</option>
+        <option>Maharashtra</option><option>Manipur</option><option>Meghalaya</option>
+        <option>Mizoram</option><option>Nagaland</option><option>Odisha</option>
+        <option>Punjab</option><option>Rajasthan</option><option>Sikkim</option>
+        <option>Tamil Nadu</option><option>Telangana</option><option>Tripura</option>
+        <option>Uttarakhand</option><option>Uttar Pradesh</option><option>West Bengal</option>
+      </select>
+      <input id="cus-pincode" type="text" placeholder="Pincode" maxlength="6" style="width:130px" required>
+    </div>
+
+    <input type="text" id="txn-id" placeholder="Enter UPI Transaction ID (from app) or reference" required>
+
+    <button id="place-order" class="btn-primary" style="margin-top:8px">I HAVE PAID</button>
+
+    <p id="checkout-msg" style="text-align:center;padding:12px 0;color:#666"></p>
+  </section>
+</main>
+
+<!-- success modal (hidden) -->
+<div id="order-modal" class="product-popup" style="display:none">
+  <div class="popup-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <button class="popup-close" aria-label="Close">✕</button>
+    <div style="padding:6px 14px;text-align:center">
+      <h2 id="modal-title">Order placed!</h2>
+      <p id="modal-body" style="margin:8px 0;color:#333"></p>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:12px">
+        <button id="modal-orders" class="view-btn">View Orders</button>
+        <button id="modal-home" class="buy-btn">Continue Shopping</button>
+      </div>
+    </div>
   </div>
-
-  <!-- UPI PAYMENT -->
-  <div class="upi-box">
-    <h3>Scan to Pay</h3>
-    <img src="images/qr.png" alt="UPI QR Code">
-    <p>UPI ID: <strong>classicvapes@upi</strong></p>
-  </div>
-
-  <!-- CHECKOUT FORM -->
-  <div class="checkout-form">
-    <input type="text" id="cus-name" placeholder="Full Name" required>
-    <input type="number" id="cus-phone" placeholder="Mobile Number" required>
-    <textarea id="cus-address" rows="3" placeholder="Delivery Address" required></textarea>
-    <input type="text" id="payment-id" placeholder="Payment Transaction ID / UTR" required>
-
-    <button class="btn-primary" id="place-order-btn">Place Order</button>
-  </div>
-
 </div>
 
-<!-- FOOTER -->
 <footer class="checkout-footer">
   <p>Contact: classicvapes@gmail.com | Instagram: @classicvapes</p>
 </footer>
 
-<script src="js/cart.js"></script>
-
-<script>
-// Load cart & display order
-let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-const orderItems = document.getElementById("order-items");
-const orderTotal = document.getElementById("order-total");
-
-function loadOrderSummary() {
-  let total = 0;
-  orderItems.innerHTML = "";
-
-  if(cart.length === 0){
-    orderItems.innerHTML = "<p>Your cart is empty</p>";
-    orderTotal.innerText = "0";
-    return;
-  }
-
-  cart.forEach(p => {
-    total += p.price * p.qty;
-
-    orderItems.innerHTML += `
-      <div class="order-item">
-        <div style="display:flex;align-items:center">
-          <img src="${p.image || 'images/logo.png'}" onerror="this.src='images/logo.png'">
-          <span>${p.name} × ${p.qty}</span>
-        </div>
-        <span>₹${p.price * p.qty}</span>
-      </div>
-    `;
-  });
-
-  orderTotal.innerText = total;
-}
-
-loadOrderSummary();
-
-
-// Place Order Button
-document.getElementById("place-order-btn").addEventListener("click", () => {
-
-  const name = document.getElementById("cus-name").value.trim();
-  const phone = document.getElementById("cus-phone").value.trim();
-  const address = document.getElementById("cus-address").value.trim();
-  const payid = document.getElementById("payment-id").value.trim();
-
-  if(!name || !phone || !address || !payid){
-    alert("⚠ Please fill all details");
-    return;
-  }
-
-  let msg = `🛒 *New Order*%0A%0A👤 Name: ${name}%0A📞 Phone: ${phone}%0A📍 Address: ${address}%0A💳 Payment ID: ${payid}%0A%0A🧾 *Items:*%0A`;
-
-  cart.forEach(p => {
-    msg += `▫ ${p.name} × ${p.qty} = ₹${p.price * p.qty}%0A`;
-  });
-
-  msg += `%0A💰 Total: ₹${orderTotal.innerText}`;
-
-  const whatsappURL = `https://wa.me/919999999999?text=${msg}`;
-  window.open(whatsappURL, "_blank");
-
-  localStorage.removeItem("cart");
-  alert("✅ Order placed! Redirecting to WhatsApp...");
-  window.location.href = "index.html";
-});
-
-</script>
-
+<script src="js/cart.js" defer></script>
+<script src="js/checkout.js" defer></script>
 </body>
 </html>
