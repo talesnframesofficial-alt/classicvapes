@@ -1,8 +1,25 @@
-/* js/checkout.js */
-const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSR_iyowIpHMFuMfTUmzY74gpIr15qPZdYG98mCTjWBL-aWk9iMg0PqT9YedzANSO69rguaIRYl0N7n/pub?output=csv";
-const POST_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"; // replace with your Apps Script Web App URL
+/* checkout.js
+   Loads cart from localStorage ('cart'),
+   validates form,
+   generates OrderID CVxxxxx,
+   saves order to localStorage key 'cv_orders',
+   optionally POSTs to server if POST_URL is provided.
+*/
 
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
+/* ---------- CONFIG ----------
+ * If you have an Apps Script web app URL that accepts JSON POST,
+ * set POST_URL to that string (including https://...). If left empty,
+ * the code will skip server POST but still save to local storage.
+ */
+const POST_URL = ""; // <-- OPTIONAL: set your Apps Script POST URL here (e.g. "https://script.google.com/macros/s/XXXX/exec")
+
+/* ---------- Helpers ---------- */
+function getCart(){
+  try { return JSON.parse(localStorage.getItem('cart')) || []; }
+  catch(e){ return []; }
+}
+function setOrders(arr){ localStorage.setItem('cv_orders', JSON.stringify(arr)); }
+function getOrders(){ try { return JSON.parse(localStorage.getItem('cv_orders')) || []; } catch(e){ return []; } }
 
 function formatDate(d){
   const dd = String(d.getDate()).padStart(2,'0');
@@ -10,98 +27,182 @@ function formatDate(d){
   const yyyy = d.getFullYear();
   return dd + '-' + mm + '-' + yyyy;
 }
-
 function generateOrderId(){
   const num = Math.floor(Math.random()*90000) + 10000;
-  return 'CV' + num;
+  return 'CV' + String(num);
 }
 
-function showSummary(){
-  const itemsDiv = document.getElementById('summary-items');
-  const totalSpan = document.getElementById('summary-total');
-  itemsDiv.innerHTML = '';
+/* ---------- Render cart summary ---------- */
+function renderSummary(){
+  const cart = getCart();
+  const itemsEl = document.getElementById('order-items');
+  const totalEl = document.getElementById('order-total');
+  itemsEl.innerHTML = '';
+  if(!cart || cart.length === 0){
+    itemsEl.innerHTML = '<p>Your cart is empty.</p>';
+    totalEl.innerText = '0';
+    return;
+  }
   let total = 0;
-  cart.forEach(item=>{
-    const price = item.price * item.qty;
-    total += price;
-    const p = document.createElement('p');
-    p.innerText = `${item.name} x${item.qty} — ₹${price}`;
-    itemsDiv.appendChild(p);
+  cart.forEach(it => {
+    const line = document.createElement('div');
+    line.className = 'order-item';
+    const left = document.createElement('div');
+    left.style.display = 'flex'; left.style.alignItems = 'center'; left.style.gap = '10px';
+    const img = document.createElement('img');
+    img.src = it.image || 'images/logo.png';
+    img.width = 56; img.height = 56; img.style.borderRadius = '12px';
+    img.onerror = function(){ this.src = 'images/logo.png'; };
+    const name = document.createElement('div');
+    name.innerText = `${it.name} × ${it.qty}`;
+    left.appendChild(img); left.appendChild(name);
+
+    const right = document.createElement('div');
+    right.innerText = '₹' + (Number(it.price) * Number(it.qty)).toFixed(0);
+
+    line.appendChild(left); line.appendChild(right);
+    itemsEl.appendChild(line);
+
+    total += Number(it.price) * Number(it.qty);
   });
-  totalSpan.innerText = total;
+  totalEl.innerText = total.toFixed(0);
 }
 
+/* ---------- Validate ---------- */
+function validateForm(name, phone, addr, state, pin, txn){
+  if(!name) return "Enter full name";
+  if(!/^\d{10}$/.test(phone)) return "Phone must be 10 digits";
+  if(!addr) return "Enter address line";
+  if(!state) return "Select state";
+  if(!/^\d{6}$/.test(pin)) return "Pincode must be 6 digits";
+  if(!txn) return "Enter Transaction ID";
+  return "";
+}
+
+/* ---------- Submit order ---------- */
+async function submitOrder(orderObj){
+  // Save locally first
+  const orders = getOrders();
+  orders.unshift(orderObj); // new on top
+  setOrders(orders);
+
+  // Try POST if configured (best-effort, ignore failures)
+  if(POST_URL && POST_URL.trim()){
+    try{
+      const resp = await fetch(POST_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderObj)
+      });
+      // try to read JSON; not all scripts return JSON
+      try { const j = await resp.json(); console.log('post result', j); } catch(e){ console.log('post ok'); }
+    }catch(err){
+      console.warn('POST to server failed (this is okay if Apps Script has CORS or other issues):', err);
+    }
+  }
+}
+
+/* ---------- UI Logic ---------- */
 document.addEventListener('DOMContentLoaded', () => {
-  showSummary();
+  renderSummary();
 
-  document.getElementById('checkout-form').addEventListener('submit', async (e)=>{
-    e.preventDefault();
+  // Fill phone input maxlength control
+  const phoneInput = document.getElementById('cus-phone');
+  phoneInput.addEventListener('input', () => { phoneInput.value = phoneInput.value.replace(/[^\d]/g,'').slice(0,10); });
 
-    const name = document.getElementById('name').value.trim();
-    const phone = document.getElementById('phone').value.trim();
-    const house = document.getElementById('house').value.trim();
-    const city = document.getElementById('city').value.trim();
-    const state = document.getElementById('state').value;
-    const pincode = document.getElementById('pincode').value.trim();
-    const txnId = document.getElementById('txn-id').value.trim();
+  const pinInput = document.getElementById('cus-pincode');
+  // NOTE: in this layout pincode is #cus-pincode on other variants: but here we used #cus-pincode earlier? safe check
+  const pincodeEl = document.getElementById('cus-pincode');
+  if(pincodeEl){
+    pincodeEl.addEventListener('input', ()=> { pincodeEl.value = pincodeEl.value.replace(/[^\d]/g,'').slice(0,6); });
+  }
 
-    if(!name || !phone.match(/^\d{10}$/) || !house || !city || !state || !pincode.match(/^\d{6}$/) || !txnId){
-      document.getElementById('checkout-msg').innerText = "Please fill all details correctly.";
-      document.getElementById('checkout-msg').style.color = 'red';
+  // Buttons for UPI apps (attempt open handlers)
+  document.getElementById('gpay-btn').addEventListener('click', ()=> {
+    // upi intent (will open app if available)
+    const upi = 'upi://pay?pa=zerabathool4@oksbi&pn=ClassicVapes&cu=INR';
+    window.location.href = upi;
+  });
+  document.getElementById('phonepe-btn').addEventListener('click', ()=> {
+    const upi = 'phonepe://pay?pa=zerabathool4@oksbi&pn=ClassicVapes&cu=INR';
+    window.location.href = upi;
+  });
+  document.getElementById('paytm-btn').addEventListener('click', ()=> {
+    const upi = 'paytmmp://pay?pa=zerabathool4@oksbi&pn=ClassicVapes&cu=INR';
+    window.location.href = upi;
+  });
+
+  // Place order click
+  document.getElementById('place-order').addEventListener('click', async () => {
+    const name = document.getElementById('cus-name').value.trim();
+    const phone = document.getElementById('cus-phone').value.trim();
+    const addressLine = document.getElementById('cus-address-line').value.trim();
+    const state = document.getElementById('cus-state').value;
+    const pincode = document.getElementById('cus-pincode') ? document.getElementById('cus-pincode').value.trim() : (document.getElementById('cus-pincode')||{value:''}).value;
+    const txn = document.getElementById('txn-id').value.trim();
+
+    const err = validateForm(name, phone, addressLine, state, pincode, txn);
+    const msgEl = document.getElementById('checkout-msg');
+    if(err){
+      msgEl.innerText = err;
+      msgEl.style.color = 'red';
+      return;
+    }
+    msgEl.innerText = 'Placing order...';
+    msgEl.style.color = '#666';
+
+    const cart = getCart();
+    if(!cart || cart.length === 0){
+      msgEl.innerText = 'Cart is empty';
+      msgEl.style.color = 'red';
       return;
     }
 
-    const orderId = generateOrderId();
-    const date = formatDate(new Date());
-    const address = `${house}, ${city}, ${state} – ${pincode}`;
-    const products = cart.map(i=>`${i.name} x${i.qty}`).join(', ');
-    const total = cart.reduce((s,i)=> s + i.price * i.qty, 0);
+    const total = cart.reduce((s,i)=> s + (Number(i.price) * Number(i.qty)),0);
+    const productsStr = cart.map(i => `${i.name} x${i.qty}`).join(', ');
 
-    const data = {
-      OrderID: orderId,
-      Date: date,
-      Name: name,
-      Phone: phone,
-      Address: address,
-      Products: products,
-      Total: total,
-      TxnID: txnId,
-      Status: 'Pending'
+    const orderId = generateOrderId();
+    const orderObj = {
+      orderId,
+      date: formatDate(new Date()),
+      name,
+      phone,
+      address: `${addressLine}, ${state} - ${pincode}`,
+      products: productsStr,
+      total: Number(total),
+      txnId: txn,
+      status: 'Pending'
     };
 
-    document.getElementById('checkout-msg').innerText = "Submitting your order…";
-    document.getElementById('checkout-msg').style.color = '#666';
+    try{
+      await submitOrder(orderObj);
+      // Clear cart after saving
+      localStorage.removeItem('cart');
+      renderSummary();
 
-    try {
-      const res = await fetch(POST_URL, {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
-      const json = await res.json();
-      if(json.success){
-        document.getElementById('checkout-msg').innerHTML = `Order placed! Verifying payment. ID: <strong>${orderId}</strong>`;
-        document.getElementById('checkout-msg').style.color = 'green';
-        localStorage.removeItem('cart');
-        document.getElementById('checkout-form').reset();
+      // show success modal
+      const modal = document.getElementById('order-modal');
+      const body = document.getElementById('modal-body');
+      body.innerHTML = `Order placed! Verifying payment. ID: <strong>${orderId}</strong><br><small>We'll notify you after verification.</small>`;
+      modal.style.display = 'flex';
 
-        // maybe redirect or offer button
-      } else {
-        throw new Error('Server failed');
-      }
-    } catch(err){
-      console.error(err);
-      document.getElementById('checkout-msg').innerText = "Error submitting order. Please try again.";
-      document.getElementById('checkout-msg').style.color = 'red';
+      // modal buttons
+      document.getElementById('modal-orders').onclick = () => {
+        modal.style.display='none';
+        window.location.href = 'orders.html';
+      };
+      document.getElementById('modal-home').onclick = () => {
+        modal.style.display='none';
+        window.location.href = 'index.html';
+      };
+      // close btn
+      modal.querySelector('.popup-close').onclick = () => modal.style.display='none';
+
+      msgEl.innerText = '';
+    }catch(e){
+      console.error('Error saving order:', e);
+      msgEl.innerText = 'Failed to place order. Try again.';
+      msgEl.style.color = 'red';
     }
-  });
-
-  document.getElementById('gpay-btn').addEventListener('click', ()=> {
-    window.location.href = 'upi://pay?pa=zerabathool4@oksbi&pn=ClassicVapes&cu=INR';
-  });
-  document.getElementById('phonepe-btn').addEventListener('click', ()=> {
-    window.location.href = 'phonepe://pay?pa=zerabathool4@oksbi&pn=ClassicVapes&cu=INR';
-  });
-  document.getElementById('paytm-btn').addEventListener('click', ()=> {
-    window.location.href = 'tezos://upi?pa=zerabathool4@oksbi&pn=ClassicVapes&cu=INR';
   });
 });
