@@ -8,9 +8,12 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+
 <header class="top-header">
   <div class="header-left">
-    <a href="index.html"><img src="images/logo.png" class="logo" alt="ClassicVapes" onerror="this.onerror=null;this.src='images/logo.png'"></a>
+    <a href="index.html">
+      <img src="images/logo.png" class="logo" alt="ClassicVapes" onerror="this.onerror=null;this.src='images/logo.png'">
+    </a>
   </div>
   <div class="header-right">
     <nav class="nav-links">
@@ -18,17 +21,30 @@
       <a href="products.html">Products</a>
       <a href="checkout.html">Checkout</a>
     </nav>
-    <button class="cart-btn" onclick="toggleCart()"> <svg viewBox="0 0 24 24" width="20" height="20"><path d="M7 4h-2l-3 9v2h2l1 5h14l1-5h2v-2l-3-9h-2m-2 0h-6m-1 0l-1 3h10l-1-3m-7 7h10l1 4h-12l1-4zm2 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" fill="currentColor"/></svg> <span id="cart-count">0</span></button>
+    <button class="cart-btn" onclick="toggleCart()">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M7 4h-2l-3 9v2h2l1 5h14l1-5h2v-2l-3-9h-2m-2 0h-6m-1 0l-1 3h10l-1-3m-7 7h10l1 4h-12l1-4zm2 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" fill="currentColor"/></svg> 
+      <span id="cart-count">0</span>
+    </button>
     <button class="hamburger" onclick="document.body.classList.toggle('nav-open')">☰</button>
   </div>
 </header>
 
 <main>
+
+  <!-- ✅ SEARCH BAR ADDED -->
+  <div class="search-wrap" style="padding:16px; text-align:center;">
+    <input id="search-box" type="text" placeholder="Search products..." 
+      style="width:90%;max-width:400px;padding:12px;border-radius:8px;border:1px solid #ddd;font-size:16px;">
+  </div>
+
+  <!-- ✅ PRODUCTS GRID (already present, kept as is) -->
   <section class="products-list">
     <div class="products-grid" id="products-grid"></div>
   </section>
+
 </main>
 
+<!-- ✅ CART (already present, kept as is) -->
 <div class="cart" id="cart" aria-hidden="true">
   <h3>Your Cart</h3>
   <div id="cart-items"></div>
@@ -36,7 +52,34 @@
   <button class="checkout-btn" onclick="location.href='checkout.html'">Checkout</button>
 </div>
 
+<!-- ✅ PRODUCT POPUP ADDED (FIXES YOUR CLICK BUG + VARIANTS + ADD TO CART) -->
+<div id="product-popup" class="product-popup" style="display:none;">
+  <div class="popup-card">
+    <button id="popup-close" class="popup-close">✕</button>
+    
+    <div class="popup-media">
+      <img id="popup-img" src="" alt="Product">
+    </div>
+
+    <div class="popup-info">
+      <h3 id="popup-title"></h3>
+      <p id="popup-desc"></p>
+
+      <div id="popup-price"></div>
+      <div id="popup-variants" class="variants-row"></div>
+
+      <div class="popup-actions">
+        <button id="popup-add" class="buy-btn">Add to Cart</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ✅ LOAD SCRIPTS -->
 <script src="js/cart.js" defer></script>
 <script src="js/products.js" defer></script>
+
 </body>
 </html>
