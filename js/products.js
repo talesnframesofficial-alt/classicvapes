@@ -171,6 +171,15 @@ async function renderProducts(){
   function draw(list){ grid.innerHTML = ""; list.forEach(p => grid.appendChild(renderProductCard(p))); }
   draw(products);
   const input = document.getElementById("search-input");
-  input.addEventListener("input", (e)=>{ const q = e.target.value.trim().toLowerCase(); if(!q) return draw(products); const filtered = products.filter(p => (p.name||"").toLowerCase().includes(q) || (p.description||"").toLowerCase().includes(q)); draw(filtered); });
+if (input) {
+  input.addEventListener("input", (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    if (!q) return draw(products);
+    const filtered = products.filter(p =>
+      (p.name || "").toLowerCase().includes(q) ||
+      (p.description || "").toLowerCase().includes(q)
+    );
+    draw(filtered);
+  });
 }
-document.addEventListener("DOMContentLoaded", renderProducts);
+
