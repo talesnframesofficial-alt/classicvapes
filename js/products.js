@@ -182,4 +182,8 @@ if (input) {
     draw(filtered);
   });
 }
+} // ✅ close renderProducts function
+
+// ✅ Run after page load
+document.addEventListener("DOMContentLoaded", renderProducts);
 
