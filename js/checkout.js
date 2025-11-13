@@ -1,209 +1,192 @@
-/* checkout.js — ClassicVapes Checkout (fixed version)
------------------------------------------------------ */
+/* checkout.js — ClassicVapes verified UPI checkout */
 
-const POST_URL = ""; // Optional: your Apps Script web app URL
-
-/* ---------- Helpers ---------- */
 function getCart() {
-  try { return JSON.parse(localStorage.getItem('cart')) || []; }
-  catch(e){ console.error("Cart parse error", e); return []; }
-}
-function setOrders(arr){ localStorage.setItem('cv_orders', JSON.stringify(arr)); }
-function getOrders(){ try { return JSON.parse(localStorage.getItem('cv_orders')) || []; } catch(e){ return []; } }
-
-function formatDate(d){
-  const dd = String(d.getDate()).padStart(2,'0');
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const yyyy = d.getFullYear();
-  return dd + '-' + mm + '-' + yyyy;
-}
-function generateOrderId(){
-  const num = Math.floor(Math.random()*90000) + 10000;
-  return 'CV' + String(num);
+  try {
+    return JSON.parse(localStorage.getItem("cart")) || [];
+  } catch (e) {
+    return [];
+  }
 }
 
-/* ---------- Render cart summary (FIXED for [object Object]) ---------- */
-function renderSummary(){
+function formatDate(d) {
+  return `${d.getDate().toString().padStart(2, "0")}-${(d.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}-${d.getFullYear()}`;
+}
+
+function generateOrderId() {
+  return "CV" + Math.floor(Math.random() * 90000 + 10000);
+}
+
+function renderSummary() {
   const cart = getCart();
-  const itemsEl = document.getElementById('order-items');
-  const totalEl = document.getElementById('order-total');
-  itemsEl.innerHTML = '';
+  const itemsEl = document.getElementById("order-items");
+  const totalEl = document.getElementById("order-total");
+  if (!itemsEl || !totalEl) return;
 
-  if(!cart.length){
-    itemsEl.innerHTML = '<p class="empty-cart">Your cart is empty. <a href="products.html">Shop now</a></p>';
-    totalEl.innerText = '0';
+  itemsEl.innerHTML = "";
+  if (cart.length === 0) {
+    itemsEl.innerHTML = "<p>Your cart is empty.</p>";
+    totalEl.innerText = "0";
     return;
   }
 
   let total = 0;
+  cart.forEach((it) => {
+    const priceVal =
+      typeof it.price === "object"
+        ? it.price.offer || it.price.mrp || 0
+        : Number(it.price) || 0;
 
-  cart.forEach(item => {
-    const itemDiv = document.createElement('div');
-    itemDiv.className = 'order-item';
+    const line = document.createElement("div");
+    line.className = "order-item";
 
-    const left = document.createElement('div');
-    left.className = 'item-left';
+    const left = document.createElement("div");
+    left.className = "order-left";
 
-    const img = document.createElement('img');
-    img.src = item.image || 'images/logo.png';
-    img.alt = item.name || 'Product';
-    img.width = 60; img.height = 60;
-    img.onerror = () => img.src = 'images/logo.png';
+    const img = document.createElement("img");
+    img.src = it.image || "images/logo.png";
+    img.width = 50;
+    img.height = 50;
+    img.onerror = function () {
+      this.src = "images/logo.png";
+    };
 
-    const name = document.createElement('div');
-    name.textContent = `${item.name || "Product"} × ${item.qty || 1}`;
+    const txt = document.createElement("div");
+    const productName =
+      typeof it.name === "object"
+        ? it.name.name || JSON.stringify(it.name)
+        : it.name;
+    txt.innerText = `${productName} × ${it.qty}`;
 
     left.appendChild(img);
-    left.appendChild(name);
+    left.appendChild(txt);
 
-    // ✅ extract numeric price safely
-    let priceNum = 0;
-    if (typeof item.price === "object") {
-      // handle { mrp: 1000, offer: 800 }
-      priceNum = item.price.offer || item.price.mrp || 0;
-    } else if (typeof item.price === "string") {
-      // handle "800" or "₹800"
-      priceNum = parseFloat(item.price.replace(/[^\d.]/g, "")) || 0;
-    } else {
-      priceNum = Number(item.price) || 0;
-    }
+    const right = document.createElement("div");
+    right.innerText = "₹" + (priceVal * it.qty).toFixed(0);
 
-    const lineTotal = priceNum * (item.qty || 1);
-    total += lineTotal;
+    line.appendChild(left);
+    line.appendChild(right);
+    itemsEl.appendChild(line);
 
-    const right = document.createElement('div');
-    right.textContent = '₹' + lineTotal.toFixed(0);
-
-    itemDiv.appendChild(left);
-    itemDiv.appendChild(right);
-    itemsEl.appendChild(itemDiv);
+    total += priceVal * it.qty;
   });
 
   totalEl.innerText = total.toFixed(0);
 }
 
-
-/* ---------- Validate ---------- */
-function validateForm(name, phone, addr, state, pin, txn){
-  if(!name) return "Enter full name";
-  if(!/^\d{10}$/.test(phone)) return "Phone must be 10 digits";
-  if(!addr) return "Enter address";
-  if(!state) return "Select state";
-  if(!/^\d{6}$/.test(pin)) return "Pincode must be 6 digits";
-  if(!txn) return "Enter UPI Transaction ID";
+function validateForm(name, phone, address, state, pin, txn) {
+  if (!name) return "Enter your name";
+  if (!/^[0-9]{10}$/.test(phone)) return "Phone must be 10 digits";
+  if (!address) return "Enter address";
+  if (!state) return "Select a state";
+  if (!/^[0-9]{6}$/.test(pin)) return "Pincode must be 6 digits";
+  if (!txn) return "Enter Transaction ID";
   return "";
 }
 
-/* ---------- Submit order ---------- */
-async function submitOrder(orderObj){
-  const orders = getOrders();
-  orders.unshift(orderObj);
-  setOrders(orders);
-
-  if(POST_URL && POST_URL.trim()){
-    try{
-      const resp = await fetch(POST_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderObj)
-      });
-      await resp.text();
-    }catch(err){
-      console.warn("POST failed (maybe CORS, safe to ignore):", err);
-    }
-  }
+function submitOrder(order) {
+  const orders = JSON.parse(localStorage.getItem("cv_orders") || "[]");
+  orders.unshift(order);
+  localStorage.setItem("cv_orders", JSON.stringify(orders));
+  localStorage.removeItem("cart");
 }
 
-/* ---------- Main UI Logic ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   renderSummary();
 
-  // Input limits
-  const phoneInput = document.getElementById('cus-phone');
-  if(phoneInput)
-    phoneInput.addEventListener('input', () => phoneInput.value = phoneInput.value.replace(/\D/g,'').slice(0,10));
+  const phone = document.getElementById("cus-phone");
+  const pin = document.getElementById("cus-pincode");
+  if (phone)
+    phone.addEventListener(
+      "input",
+      () => (phone.value = phone.value.replace(/\D/g, "").slice(0, 10))
+    );
+  if (pin)
+    pin.addEventListener(
+      "input",
+      () => (pin.value = pin.value.replace(/\D/g, "").slice(0, 6))
+    );
 
-  const pinInput = document.getElementById('cus-pincode');
-  if(pinInput)
-    pinInput.addEventListener('input', () => pinInput.value = pinInput.value.replace(/\D/g,'').slice(0,6));
+  const gpay = document.getElementById("gpay-btn");
+  if (gpay)
+    gpay.addEventListener("click", () => {
+      window.location.href =
+        "upi://pay?pa=zerabathool4@oksbi&pn=ClassicVapes&cu=INR";
+    });
 
-  // UPI intent buttons
-  const upiBase = "zerabathool4@oksbi";
-  const makeUPI = (scheme) => `${scheme}://pay?pa=${upiBase}&pn=ClassicVapes&cu=INR`;
+  const phonepe = document.getElementById("phonepe-btn");
+  if (phonepe)
+    phonepe.addEventListener("click", () => {
+      window.location.href =
+        "phonepe://pay?pa=zerabathool4@oksbi&pn=ClassicVapes&cu=INR";
+    });
 
-  const gpay = document.getElementById('gpay-btn');
-  const phonepe = document.getElementById('phonepe-btn');
-  const paytm = document.getElementById('paytm-btn');
+  const paytm = document.getElementById("paytm-btn");
+  if (paytm)
+    paytm.addEventListener("click", () => {
+      window.location.href =
+        "paytmmp://pay?pa=zerabathool4@oksbi&pn=ClassicVapes&cu=INR";
+    });
 
-  if(gpay) gpay.onclick = ()=> window.location.href = makeUPI("upi");
-  if(phonepe) phonepe.onclick = ()=> window.location.href = makeUPI("phonepe");
-  if(paytm) paytm.onclick = ()=> window.location.href = makeUPI("paytmmp");
+  const placeBtn = document.getElementById("place-order");
+  if (placeBtn)
+    placeBtn.addEventListener("click", () => {
+      const name = document.getElementById("cus-name").value.trim();
+      const phone = document.getElementById("cus-phone").value.trim();
+      const address = document.getElementById("cus-address-line").value.trim();
+      const state = document.getElementById("cus-state").value;
+      const pin = document.getElementById("cus-pincode").value.trim();
+      const txn = document.getElementById("txn-id").value.trim();
+      const msgEl = document.getElementById("checkout-msg");
 
-  // Place order
-  const placeBtn = document.getElementById('place-order');
-  if(placeBtn) placeBtn.addEventListener('click', async ()=>{
-    const name = document.getElementById('cus-name').value.trim();
-    const phone = document.getElementById('cus-phone').value.trim();
-    const addr = document.getElementById('cus-address-line').value.trim();
-    const state = document.getElementById('cus-state').value.trim();
-    const pin = document.getElementById('cus-pincode').value.trim();
-    const txn = document.getElementById('txn-id').value.trim();
-    const msgEl = document.getElementById('checkout-msg');
+      const err = validateForm(name, phone, address, state, pin, txn);
+      if (err) {
+        msgEl.innerText = err;
+        msgEl.style.color = "red";
+        return;
+      }
 
-    const err = validateForm(name, phone, addr, state, pin, txn);
-    if(err){ msgEl.textContent = err; msgEl.style.color = 'red'; return; }
+      const cart = getCart();
+      if (!cart.length) {
+        msgEl.innerText = "Your cart is empty";
+        msgEl.style.color = "red";
+        return;
+      }
 
-    const cart = getCart();
-    if(!cart.length){ msgEl.textContent = "Cart is empty"; msgEl.style.color = 'red'; return; }
+      const total = cart.reduce(
+        (sum, it) =>
+          sum +
+          (typeof it.price === "object"
+            ? it.price.offer || it.price.mrp || 0
+            : Number(it.price) || 0) *
+            (it.qty || 1),
+        0
+      );
 
-    const total = cart.reduce((sum, i)=> sum + (parseFloat(i.price)||0) * (i.qty||1), 0);
-    const productsStr = cart.map(i => `${i.name} x${i.qty}`).join(', ');
+      const orderId = generateOrderId();
+      const products = cart.map((i) => `${i.name} × ${i.qty}`).join(", ");
 
-    const orderId = generateOrderId();
-    const orderObj = {
-      orderId,
-      date: formatDate(new Date()),
-      name,
-      phone,
-      address: `${addr}, ${state} - ${pin}`,
-      products: productsStr,
-      total,
-      txnId: txn,
-      status: 'Pending'
-    };
+      const orderObj = {
+        orderId,
+        date: formatDate(new Date()),
+        name,
+        phone,
+        address: `${address}, ${state} - ${pin}`,
+        products,
+        total,
+        txnId: txn,
+        status: "Pending Verification",
+      };
 
-    msgEl.textContent = "Saving order...";
-    msgEl.style.color = "#444";
+      submitOrder(orderObj);
 
-    try {
-      await submitOrder(orderObj);
-      localStorage.removeItem('cart');
-      renderSummary();
-      msgEl.textContent = "";
-
-      const modal = document.getElementById('order-modal');
-      const body = document.getElementById('modal-body');
-      body.innerHTML = `
-        ✅ <b>Thank you!</b><br>
-        Order <strong>${orderId}</strong> is under payment verification.<br>
-        We'll confirm it soon.
-      `;
+      const modal = document.getElementById("order-modal");
+      const body = document.getElementById("modal-body");
+      body.innerHTML = `Thank you, <b>${name}</b>!<br>Order <b>${orderId}</b> placed.<br>Payment under verification.`;
       modal.style.display = "flex";
 
-      document.getElementById('modal-orders').onclick = () => {
-        modal.style.display='none';
-        window.location.href='orders.html';
-      };
-      document.getElementById('modal-home').onclick = () => {
-        modal.style.display='none';
-        window.location.href='index.html';
-      };
-      modal.querySelector('.popup-close').onclick = () => modal.style.display='none';
-
-    } catch(e){
-      console.error("Error saving order", e);
-      msgEl.textContent = "Failed to save order. Try again.";
-      msgEl.style.color = "red";
-    }
-  });
+      msgEl.innerText = "";
+      renderSummary();
+    });
 });
