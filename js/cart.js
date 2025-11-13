@@ -1,48 +1,128 @@
-/* js/cart.js */
-let cart = JSON.parse(localStorage.getItem("classicvapes_cart_v1") || "[]");
-function saveCart(){ localStorage.setItem("classicvapes_cart_v1", JSON.stringify(cart)); }
-function calcTotal(){ return cart.reduce((s,i)=> s + (Number(i.price)||0) * (i.qty||1), 0); }
-function updateCartUI(){
-  const itemsBox = document.getElementById("cart-items");
+/* cart.js — shared cart logic for ClassicVapes */
+
+const CART_KEY = "cart";
+
+/* ---------- Helpers ---------- */
+function getCart() {
+  try {
+    return JSON.parse(localStorage.getItem(CART_KEY)) || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveCart(cart) {
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+}
+
+function updateCartCount() {
   const countEl = document.getElementById("cart-count");
-  const totalEl = document.getElementById("total") || document.querySelector(".cart-total span");
-  if(itemsBox) itemsBox.innerHTML = "";
+  if (countEl) countEl.innerText = getCart().reduce((sum, i) => sum + i.qty, 0);
+}
+
+/* ---------- Add / Remove / Clear ---------- */
+function addToCart(item) {
+  if (!item || !item.name) return;
+
+  const cart = getCart();
+  const existing = cart.find(
+    (c) => c.id === item.id && c.variant === item.variant
+  );
+
+  if (existing) {
+    existing.qty += item.qty || 1;
+  } else {
+    cart.push({
+      id: item.id,
+      name: item.name,
+      price: Number(item.price) || 0,
+      qty: item.qty || 1,
+      image: item.image || "images/logo.png",
+      variant: item.variant || null,
+    });
+  }
+
+  saveCart(cart);
+  updateCartCount();
+  showToast("Added to cart");
+}
+
+/* ---------- Render cart popup ---------- */
+function toggleCart() {
+  const cart = document.getElementById("cart");
+  if (cart) cart.style.display = cart.style.display === "block" ? "none" : "block";
+  renderCart();
+}
+
+function renderCart() {
+  const items = getCart();
+  const container = document.getElementById("cart-items");
+  const totalEl = document.getElementById("total");
+  if (!container || !totalEl) return;
+
+  container.innerHTML = "";
   let total = 0;
-  cart.forEach(it => {
-    total += (Number(it.price)||0) * (it.qty||1);
-    if(itemsBox){
-      const div = document.createElement("div"); div.className = "cart-item";
-      div.innerHTML = `<div style="flex:1">${it.name} × ${it.qty}</div><div>₹${(it.price*it.qty).toFixed(2)} <button style="margin-left:8px" onclick="removeCartItem('${it.id}')">✕</button></div>`;
-      itemsBox.appendChild(div);
-    }
+
+  if (items.length === 0) {
+    container.innerHTML = "<p>Your cart is empty.</p>";
+    totalEl.innerText = "0";
+    updateCartCount();
+    return;
+  }
+
+  items.forEach((it, idx) => {
+    const div = document.createElement("div");
+    div.className = "cart-item";
+
+    const left = document.createElement("div");
+    left.style.display = "flex";
+    left.style.alignItems = "center";
+    left.style.gap = "10px";
+
+    const img = document.createElement("img");
+    img.src = it.image || "images/logo.png";
+    img.alt = it.name;
+    img.width = 40;
+    img.height = 40;
+    img.style.borderRadius = "10px";
+    img.onerror = function () {
+      this.src = "images/logo.png";
+    };
+
+    const name = document.createElement("div");
+    name.innerText = `${it.name}${it.variant ? " (" + it.variant + ")" : ""}`;
+
+    left.appendChild(img);
+    left.appendChild(name);
+
+    const right = document.createElement("div");
+    right.innerText = "₹" + (it.price * it.qty).toFixed(0);
+
+    div.appendChild(left);
+    div.appendChild(right);
+    container.appendChild(div);
+
+    total += Number(it.price) * Number(it.qty);
   });
-  if(countEl) countEl.innerText = cart.length || 0;
-  if(totalEl) totalEl.innerText = total.toFixed(2);
+
+  totalEl.innerText = total.toFixed(0);
+  updateCartCount();
 }
-function addToCart(item){
-  const existing = cart.find(c=> c.id === item.id && c.name === item.name);
-  if(existing) existing.qty = (existing.qty||1) + (item.qty||1);
-  else cart.push({ ...item, qty: item.qty || 1 });
-  saveCart();
-  updateCartUI();
+
+/* ---------- Toast Message ---------- */
+function showToast(msg) {
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.innerText = msg;
+  document.body.appendChild(t);
+  setTimeout(() => (t.style.opacity = "1"), 10);
+  setTimeout(() => (t.style.opacity = "0"), 2000);
+  setTimeout(() => t.remove(), 2500);
 }
-function removeCartItem(id){
-  cart = cart.filter(c => c.id !== id);
-  saveCart();
-  updateCartUI();
-}
-function toggleCart(){
-  const c = document.getElementById("cart");
-  if(!c) return;
-  c.style.display = c.style.display === "block" ? "none" : "block";
-}
-function clearCart(){ cart = []; saveCart(); updateCartUI(); }
+
+/* ---------- Init ---------- */
+document.addEventListener("DOMContentLoaded", updateCartCount);
 window.addToCart = addToCart;
-window.removeCartItem = removeCartItem;
 window.toggleCart = toggleCart;
-window.showToast = (msg)=> {
-  let t = document.getElementById("toast");
-  if(!t){ t = document.createElement("div"); t.id="toast"; document.body.appendChild(t); }
-  t.innerText = msg; t.style.display = "block"; setTimeout(()=> t.style.display = "none", 1600);
-};
-document.addEventListener("DOMContentLoaded", updateCartUI);
+window.renderCart = renderCart;
+window.showToast = showToast;
