@@ -22,7 +22,7 @@ function generateOrderId(){
   return 'CV' + String(num);
 }
 
-/* ---------- Render cart summary ---------- */
+/* ---------- Render cart summary (FIXED for [object Object]) ---------- */
 function renderSummary(){
   const cart = getCart();
   const itemsEl = document.getElementById('order-items');
@@ -46,30 +46,42 @@ function renderSummary(){
 
     const img = document.createElement('img');
     img.src = item.image || 'images/logo.png';
-    img.alt = item.name;
+    img.alt = item.name || 'Product';
     img.width = 60; img.height = 60;
     img.onerror = () => img.src = 'images/logo.png';
 
     const name = document.createElement('div');
-    name.textContent = `${item.name} × ${item.qty}`;
+    name.textContent = `${item.name || "Product"} × ${item.qty || 1}`;
 
     left.appendChild(img);
     left.appendChild(name);
 
-    const right = document.createElement('div');
-    const itemPrice = parseFloat(item.price) || 0;
-    const lineTotal = itemPrice * (item.qty || 1);
-    right.textContent = '₹' + lineTotal.toFixed(0);
+    // ✅ extract numeric price safely
+    let priceNum = 0;
+    if (typeof item.price === "object") {
+      // handle { mrp: 1000, offer: 800 }
+      priceNum = item.price.offer || item.price.mrp || 0;
+    } else if (typeof item.price === "string") {
+      // handle "800" or "₹800"
+      priceNum = parseFloat(item.price.replace(/[^\d.]/g, "")) || 0;
+    } else {
+      priceNum = Number(item.price) || 0;
+    }
+
+    const lineTotal = priceNum * (item.qty || 1);
     total += lineTotal;
+
+    const right = document.createElement('div');
+    right.textContent = '₹' + lineTotal.toFixed(0);
 
     itemDiv.appendChild(left);
     itemDiv.appendChild(right);
-
     itemsEl.appendChild(itemDiv);
   });
 
   totalEl.innerText = total.toFixed(0);
 }
+
 
 /* ---------- Validate ---------- */
 function validateForm(name, phone, addr, state, pin, txn){
