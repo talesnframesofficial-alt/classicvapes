@@ -1,5 +1,6 @@
-/* cart.js — shared cart logic for ClassicVapes */
+/* cart.js — ClassicVapes Global Cart Manager */
 
+/* ---------- CONFIG ---------- */
 const CART_KEY = "cart";
 
 /* ---------- Helpers ---------- */
@@ -10,12 +11,17 @@ function getCart() {
     return [];
   }
 }
+
 function saveCart(cart) {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
+
 function updateCartCount() {
   const countEl = document.getElementById("cart-count");
-  if (countEl) countEl.innerText = getCart().reduce((sum, i) => sum + i.qty, 0);
+  if (countEl) {
+    const count = getCart().reduce((sum, i) => sum + i.qty, 0);
+    countEl.innerText = count;
+  }
 }
 
 /* ---------- Add / Remove ---------- */
@@ -45,7 +51,7 @@ function addToCart(item) {
   showToast("Added to cart");
 }
 
-/* ---------- Remove from cart ---------- */
+/* ---------- Remove ---------- */
 function removeFromCart(index) {
   const cart = getCart();
   cart.splice(index, 1);
@@ -54,11 +60,14 @@ function removeFromCart(index) {
   updateCartCount();
 }
 
-/* ---------- Render cart popup ---------- */
+/* ---------- Cart Popup ---------- */
 function toggleCart() {
   const cart = document.getElementById("cart");
-  if (cart) cart.style.display = cart.style.display === "block" ? "none" : "block";
-  renderCart();
+  if (cart) {
+    const visible = cart.style.display === "block";
+    cart.style.display = visible ? "none" : "block";
+    if (!visible) renderCart();
+  }
 }
 
 function renderCart() {
@@ -81,23 +90,36 @@ function renderCart() {
     const div = document.createElement("div");
     div.className = "cart-item";
 
+    // Left section
     const left = document.createElement("div");
-    left.style.display = "flex";
-    left.style.alignItems = "center";
-    left.style.gap = "10px";
+    left.className = "cart-left";
 
     const img = document.createElement("img");
     img.src = it.image || "images/logo.png";
     img.alt = it.name;
-    img.width = 40;
-    img.height = 40;
+    img.width = 48;
+    img.height = 48;
     img.style.borderRadius = "10px";
     img.onerror = function () {
       this.src = "images/logo.png";
     };
 
     const name = document.createElement("div");
-    name.innerText = `${it.name}${it.variant ? " (" + it.variant + ")" : ""}`;
+    const lineTotal = (Number(it.price) * Number(it.qty)).toFixed(0);
+    name.innerText = `${it.name}${it.variant ? " (" + it.variant + ")" : ""} × ${
+      it.qty
+    } = ₹${lineTotal}`;
+
+    left.appendChild(img);
+    left.appendChild(name);
+
+    // Right section
+    const right = document.createElement("div");
+    right.className = "cart-right";
+
+    const price = document.createElement("span");
+    price.className = "cart-price";
+    price.innerText = "₹" + lineTotal;
 
     const removeBtn = document.createElement("button");
     removeBtn.className = "remove-btn";
@@ -105,15 +127,11 @@ function renderCart() {
     removeBtn.title = "Remove item";
     removeBtn.onclick = () => removeFromCart(idx);
 
-    left.appendChild(img);
-    left.appendChild(name);
-
-    const right = document.createElement("div");
-    right.innerText = "₹" + (it.price * it.qty).toFixed(0);
+    right.appendChild(price);
+    right.appendChild(removeBtn);
 
     div.appendChild(left);
     div.appendChild(right);
-    div.appendChild(removeBtn);
     container.appendChild(div);
 
     total += Number(it.price) * Number(it.qty);
@@ -129,6 +147,7 @@ function showToast(msg) {
   t.className = "toast";
   t.innerText = msg;
   document.body.appendChild(t);
+
   setTimeout(() => (t.style.opacity = "1"), 10);
   setTimeout(() => (t.style.opacity = "0"), 2000);
   setTimeout(() => t.remove(), 2500);
