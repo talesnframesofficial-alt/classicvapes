@@ -19,16 +19,57 @@ function generateOrderId() {
 }
 
 function renderSummary() {
-  const cart = getCart();
-  const itemsEl = document.getElementById("order-items");
-  const totalEl = document.getElementById("order-total");
-  if (!itemsEl || !totalEl) return;
-
   itemsEl.innerHTML = "";
-  if (cart.length === 0) {
-    itemsEl.innerHTML = "<p>Your cart is empty.</p>";
-    totalEl.innerText = "0";
-    return;
+let total = 0;
+
+cart.forEach((it, idx) => {
+  const priceVal =
+    typeof it.price === "object"
+      ? it.price.offer || it.price.mrp || 0
+      : Number(it.price) || 0;
+
+  const line = document.createElement("div");
+  line.className = "order-item";
+
+  const left = document.createElement("div");
+  left.className = "order-left";
+
+  const img = document.createElement("img");
+  img.src = it.image || "images/logo.png";
+  img.width = 50;
+  img.height = 50;
+
+  const name = document.createElement("div");
+  const productName =
+    typeof it.name === "object"
+      ? it.name.name || JSON.stringify(it.name)
+      : it.name;
+  name.innerText = `${productName} × ${it.qty}`;
+
+  const removeBtn = document.createElement("button");
+  removeBtn.className = "remove-btn";
+  removeBtn.innerText = "🗑";
+  removeBtn.title = "Remove item";
+  removeBtn.onclick = () => {
+    const updated = getCart();
+    updated.splice(idx, 1);
+    localStorage.setItem("cart", JSON.stringify(updated));
+    renderSummary();
+  };
+
+  left.appendChild(img);
+  left.appendChild(name);
+  line.appendChild(left);
+  line.appendChild(removeBtn);
+
+  const right = document.createElement("div");
+  right.innerText = "₹" + (priceVal * it.qty).toFixed(0);
+  line.appendChild(right);
+  itemsEl.appendChild(line);
+
+  total += priceVal * it.qty;
+});
+
   }
 
   let total = 0;
