@@ -1,11 +1,11 @@
-/* cart.js — ClassicVapes Smart Cart Manager */
+/* ---------------- cart.js — ClassicVapes Master Cart ---------------- */
 
 const CART_KEY = "cart";
 
-/* Helpers */
+/* Get / Save / Update */
 function getCart() {
   try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
-  catch (e) { return []; }
+  catch { return []; }
 }
 
 function saveCart(cart) {
@@ -13,34 +13,26 @@ function saveCart(cart) {
 }
 
 function updateCartCount() {
-  const countEl = document.getElementById("cart-count");
-  if (countEl) {
-    const count = getCart().reduce((sum, i) => sum + i.qty, 0);
-    countEl.innerText = count;
-  }
+  const el = document.getElementById("cart-count");
+  if (el) el.innerText = getCart().reduce((a, i) => a + i.qty, 0);
 }
 
-/* Add to cart */
+/* Add to Cart */
 function addToCart(item) {
   if (!item || !item.name) return;
+
   const cart = getCart();
+  const existing = cart.find(c => c.id === item.id && c.variant === item.variant);
 
-  const existing = cart.find(
-    (c) => c.id === item.id && c.variant === item.variant
-  );
-
-  if (existing) {
-    existing.qty += item.qty || 1;
-  } else {
-    cart.push({
-      id: item.id,
-      name: item.name,
-      price: Number(item.price) || 0,
-      qty: item.qty || 1,
-      image: item.image || "images/logo.png",
-      variant: item.variant || null,
-    });
-  }
+  if (existing) existing.qty += item.qty || 1;
+  else cart.push({
+    id: item.id,
+    name: item.name,
+    price: Number(item.price) || 0,
+    qty: item.qty || 1,
+    image: item.image || "images/logo.png",
+    variant: item.variant || null,
+  });
 
   saveCart(cart);
   updateCartCount();
@@ -56,95 +48,91 @@ function removeFromCart(index) {
   updateCartCount();
 }
 
-/* Render Cart */
+/* Render Cart Popup */
 function renderCart() {
-  const items = getCart();
-  const container = document.getElementById("cart-items");
+  const cart = getCart();
+  const list = document.getElementById("cart-items");
   const totalEl = document.getElementById("total");
-  if (!container || !totalEl) return;
+  if (!list || !totalEl) return;
 
-  container.innerHTML = "";
-  let total = 0;
-
-  if (items.length === 0) {
-    container.innerHTML = "<p>Your cart is empty.</p>";
+  list.innerHTML = "";
+  if (!cart.length) {
+    list.innerHTML = "<p>Your cart is empty.</p>";
     totalEl.innerText = "0";
-    updateCartCount();
     return;
   }
 
-  items.forEach((it, idx) => {
-    const div = document.createElement("div");
-    div.className = "cart-item";
+  let total = 0;
+  cart.forEach((item, i) => {
+    const row = document.createElement("div");
+    row.className = "cart-item";
 
     const left = document.createElement("div");
     left.className = "cart-left";
 
     const img = document.createElement("img");
-    img.src = it.image || "images/logo.png";
-    img.alt = it.name;
-    img.width = 48;
-    img.height = 48;
-    img.style.borderRadius = "10px";
+    img.src = item.image || "images/logo.png";
+    img.alt = item.name;
+    img.width = 50;
+    img.height = 50;
+    img.style.borderRadius = "8px";
     img.onerror = () => (img.src = "images/logo.png");
 
-    const name = document.createElement("div");
-    const lineTotal = (Number(it.price) * Number(it.qty)).toFixed(0);
-    name.innerText = `${it.name}${it.variant ? " (" + it.variant + ")" : ""} × ${it.qty} = ₹${lineTotal}`;
+    const title = document.createElement("div");
+    const subtotal = Number(item.price) * Number(item.qty);
+    title.innerText = `${item.name}${item.variant ? " (" + item.variant + ")" : ""} × ${item.qty} = ₹${subtotal}`;
 
     left.appendChild(img);
-    left.appendChild(name);
+    left.appendChild(title);
 
     const right = document.createElement("div");
     right.className = "cart-right";
+
     const price = document.createElement("span");
     price.className = "cart-price";
-    price.innerText = "₹" + lineTotal;
+    price.innerText = "₹" + subtotal;
 
-    const removeBtn = document.createElement("button");
-    removeBtn.className = "remove-btn";
-    removeBtn.innerText = "🗑";
-    removeBtn.title = "Remove item";
-    removeBtn.onclick = () => removeFromCart(idx);
+    const remove = document.createElement("button");
+    remove.className = "remove-btn";
+    remove.innerText = "🗑";
+    remove.title = "Remove";
+    remove.onclick = () => removeFromCart(i);
 
     right.appendChild(price);
-    right.appendChild(removeBtn);
+    right.appendChild(remove);
 
-    div.appendChild(left);
-    div.appendChild(right);
-    container.appendChild(div);
+    row.appendChild(left);
+    row.appendChild(right);
+    list.appendChild(row);
 
-    total += Number(it.price) * Number(it.qty);
+    total += subtotal;
   });
 
   totalEl.innerText = total.toFixed(0);
-  updateCartCount();
 }
 
-/* Toast */
-function showToast(msg) {
-  const t = document.createElement("div");
-  t.className = "toast";
-  t.innerText = msg;
-  document.body.appendChild(t);
-  setTimeout(() => (t.style.opacity = "1"), 10);
-  setTimeout(() => (t.style.opacity = "0"), 2000);
-  setTimeout(() => t.remove(), 2500);
-}
-
-/* Toggle cart popup */
+/* Cart Toggle */
 function toggleCart() {
   const cart = document.getElementById("cart");
-  if (cart) {
-    const visible = cart.style.display === "block";
-    cart.style.display = visible ? "none" : "block";
-    if (!visible) renderCart();
-  }
+  if (!cart) return;
+  const visible = cart.style.display === "block";
+  cart.style.display = visible ? "none" : "block";
+  if (!visible) renderCart();
+}
+
+/* Toast Message */
+function showToast(msg) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerText = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => (toast.style.opacity = "1"), 10);
+  setTimeout(() => (toast.style.opacity = "0"), 2000);
+  setTimeout(() => toast.remove(), 2500);
 }
 
 /* Init */
 document.addEventListener("DOMContentLoaded", updateCartCount);
 window.addToCart = addToCart;
-window.toggleCart = toggleCart;
 window.renderCart = renderCart;
-window.showToast = showToast;
+window.toggleCart = toggleCart;
