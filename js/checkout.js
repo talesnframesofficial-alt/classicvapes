@@ -1,19 +1,31 @@
-/* checkout.js — ClassicVapes Order Summary + UPI Verification */
+/* checkout.js — ClassicVapes Order Summary + UPI Verification + Item Removal */
 
 function getCart() {
   try { return JSON.parse(localStorage.getItem("cart")) || []; }
-  catch (e) { return []; }
+  catch { return []; }
+}
+
+function saveCart(cart) {
+  localStorage.setItem("cart", JSON.stringify(cart));
 }
 
 function formatDate(d) {
-  return `${d.getDate().toString().padStart(2, "0")}-${(d.getMonth()+1)
-    .toString().padStart(2, "0")}-${d.getFullYear()}`;
+  return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
 }
 
 function generateOrderId() {
   return "CV" + Math.floor(Math.random() * 90000 + 10000);
 }
 
+/* Remove an item from cart */
+function removeItem(index) {
+  const cart = getCart();
+  cart.splice(index, 1);
+  saveCart(cart);
+  renderSummary();
+}
+
+/* Render Checkout Summary */
 function renderSummary() {
   const cart = getCart();
   const itemsEl = document.getElementById("order-items");
@@ -27,11 +39,18 @@ function renderSummary() {
   }
 
   let total = 0;
-  cart.forEach((it) => {
+
+  cart.forEach((it, i) => {
     const lineTotal = Number(it.price) * Number(it.qty);
 
     const line = document.createElement("div");
     line.className = "order-item";
+    line.style.display = "flex";
+    line.style.alignItems = "center";
+    line.style.justifyContent = "space-between";
+    line.style.borderBottom = "1px solid #eee";
+    line.style.padding = "10px 0";
+    line.style.gap = "10px";
 
     const left = document.createElement("div");
     left.style.display = "flex";
@@ -46,13 +65,31 @@ function renderSummary() {
     img.onerror = () => (img.src = "images/logo.png");
 
     const name = document.createElement("div");
+    name.style.fontWeight = "600";
+    name.style.fontSize = "14px";
     name.innerText = `${it.name}${it.variant ? " (" + it.variant + ")" : ""} × ${it.qty} = ₹${lineTotal}`;
 
     left.appendChild(img);
     left.appendChild(name);
 
     const right = document.createElement("div");
-    right.innerText = "₹" + lineTotal;
+    right.style.display = "flex";
+    right.style.alignItems = "center";
+    right.style.gap = "10px";
+
+    const price = document.createElement("span");
+    price.innerText = "₹" + lineTotal;
+    price.style.fontWeight = "600";
+
+    const remove = document.createElement("button");
+    remove.className = "remove-btn";
+    remove.title = "Remove item";
+    remove.innerText = "🗑";
+    remove.style.cursor = "pointer";
+    remove.onclick = () => removeItem(i);
+
+    right.appendChild(price);
+    right.appendChild(remove);
 
     line.appendChild(left);
     line.appendChild(right);
@@ -75,67 +112,81 @@ function validateForm(name, phone, addr, state, pin, txn) {
   return "";
 }
 
-/* Submit order */
+/* Submit Order */
 document.addEventListener("DOMContentLoaded", () => {
   renderSummary();
 
   const phoneEl = document.getElementById("cus-phone");
-  if (phoneEl) phoneEl.addEventListener("input", () => {
-    phoneEl.value = phoneEl.value.replace(/[^\d]/g, "").slice(0, 10);
-  });
+  if (phoneEl)
+    phoneEl.addEventListener("input", () => {
+      phoneEl.value = phoneEl.value.replace(/[^\d]/g, "").slice(0, 10);
+    });
 
   const pinEl = document.getElementById("cus-pincode");
-  if (pinEl) pinEl.addEventListener("input", () => {
-    pinEl.value = pinEl.value.replace(/[^\d]/g, "").slice(0, 6);
-  });
+  if (pinEl)
+    pinEl.addEventListener("input", () => {
+      pinEl.value = pinEl.value.replace(/[^\d]/g, "").slice(0, 6);
+    });
 
-  document.getElementById("place-order").addEventListener("click", async () => {
-    const name = document.getElementById("cus-name").value.trim();
-    const phone = document.getElementById("cus-phone").value.trim();
-    const address = document.getElementById("cus-address-line").value.trim();
-    const state = document.getElementById("cus-state").value;
-    const pincode = document.getElementById("cus-pincode").value.trim();
-    const txn = document.getElementById("txn-id").value.trim();
-    const msg = document.getElementById("checkout-msg");
+  const orderBtn = document.getElementById("place-order");
+  if (orderBtn) {
+    orderBtn.addEventListener("click", async () => {
+      const name = document.getElementById("cus-name").value.trim();
+      const phone = document.getElementById("cus-phone").value.trim();
+      const address = document.getElementById("cus-address-line").value.trim();
+      const state = document.getElementById("cus-state").value;
+      const pincode = document.getElementById("cus-pincode").value.trim();
+      const txn = document.getElementById("txn-id").value.trim();
+      const msg = document.getElementById("checkout-msg");
 
-    const err = validateForm(name, phone, address, state, pincode, txn);
-    if (err) {
-      msg.innerText = err;
-      msg.style.color = "red";
-      return;
-    }
+      const err = validateForm(name, phone, address, state, pincode, txn);
+      if (err) {
+        msg.innerText = err;
+        msg.style.color = "red";
+        return;
+      }
 
-    const cart = getCart();
-    if (!cart.length) {
-      msg.innerText = "Cart is empty";
-      msg.style.color = "red";
-      return;
-    }
+      const cart = getCart();
+      if (!cart.length) {
+        msg.innerText = "Cart is empty";
+        msg.style.color = "red";
+        return;
+      }
 
-    const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
-    const productsStr = cart.map(i => `${i.name} x${i.qty}`).join(", ");
-    const orderId = generateOrderId();
+      const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+      const productsStr = cart.map(i => `${i.name} x${i.qty}`).join(", ");
+      const orderId = generateOrderId();
 
-    const orderObj = {
-      orderId,
-      date: formatDate(new Date()),
-      name,
-      phone,
-      address: `${address}, ${state} - ${pincode}`,
-      products: productsStr,
-      total,
-      txnId: txn,
-      status: "Pending"
-    };
+      const orderObj = {
+        orderId,
+        date: formatDate(new Date()),
+        name,
+        phone,
+        address: `${address}, ${state} - ${pincode}`,
+        products: productsStr,
+        total,
+        txnId: txn,
+        status: "Pending"
+      };
 
-    localStorage.removeItem("cart");
-    renderSummary();
+      // Clear cart after placing order
+      localStorage.removeItem("cart");
+      renderSummary();
 
-    const modal = document.getElementById("order-modal");
-    const body = document.getElementById("modal-body");
-    body.innerHTML = `Order placed! Verifying payment.<br>ID: <strong>${orderId}</strong><br><small>We'll verify and confirm soon.</small>`;
-    modal.style.display = "flex";
+      const modal = document.getElementById("order-modal");
+      const body = document.getElementById("modal-body");
+      if (modal && body) {
+        body.innerHTML = `
+          <div style="text-align:center;">
+            <h3 style="margin-bottom:8px;">Order Placed!</h3>
+            <p>We're verifying your payment.</p>
+            <p><strong>Order ID:</strong> ${orderId}</p>
+            <small>We'll confirm soon. Thank you!</small>
+          </div>`;
+        modal.style.display = "flex";
+      }
 
-    msg.innerText = "";
-  });
+      msg.innerText = "";
+    });
+  }
 });
