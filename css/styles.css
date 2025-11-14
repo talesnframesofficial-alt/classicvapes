@@ -166,4 +166,19 @@ body{overflow-x:hidden}
   color: #fff;
   text-shadow: 0 0 8px #7de2ff;
 }
+/* ----- cart remove button ----- */
+.remove-btn {
+  background: none;
+  border: none;
+  color: #ff4b4b;
+  cursor: pointer;
+  font-size: 1.1rem;
+  margin-left: auto;
+  transition: transform 0.2s, color 0.2s;
+}
+.remove-btn:hover {
+  transform: scale(1.2);
+  color: #ff0000;
+}
+
 
