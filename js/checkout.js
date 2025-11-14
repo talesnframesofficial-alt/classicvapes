@@ -1,17 +1,13 @@
-/* checkout.js — ClassicVapes verified UPI checkout */
+/* checkout.js — ClassicVapes Order Summary + UPI Verification */
 
 function getCart() {
-  try {
-    return JSON.parse(localStorage.getItem("cart")) || [];
-  } catch (e) {
-    return [];
-  }
+  try { return JSON.parse(localStorage.getItem("cart")) || []; }
+  catch (e) { return []; }
 }
 
 function formatDate(d) {
-  return `${d.getDate().toString().padStart(2, "0")}-${(d.getMonth() + 1)
-    .toString()
-    .padStart(2, "0")}-${d.getFullYear()}`;
+  return `${d.getDate().toString().padStart(2, "0")}-${(d.getMonth()+1)
+    .toString().padStart(2, "0")}-${d.getFullYear()}`;
 }
 
 function generateOrderId() {
@@ -22,183 +18,124 @@ function renderSummary() {
   const cart = getCart();
   const itemsEl = document.getElementById("order-items");
   const totalEl = document.getElementById("order-total");
-  if (!itemsEl || !totalEl) return;
-
   itemsEl.innerHTML = "";
-  if (cart.length === 0) {
+
+  if (!cart.length) {
     itemsEl.innerHTML = "<p>Your cart is empty.</p>";
     totalEl.innerText = "0";
     return;
   }
 
   let total = 0;
-  cart.forEach((it, idx) => {
-    const priceVal =
-      typeof it.price === "object"
-        ? it.price.offer || it.price.mrp || 0
-        : Number(it.price) || 0;
+  cart.forEach((it) => {
+    const lineTotal = Number(it.price) * Number(it.qty);
 
     const line = document.createElement("div");
     line.className = "order-item";
 
     const left = document.createElement("div");
-    left.className = "order-left";
+    left.style.display = "flex";
+    left.style.alignItems = "center";
+    left.style.gap = "10px";
 
     const img = document.createElement("img");
     img.src = it.image || "images/logo.png";
     img.width = 50;
     img.height = 50;
-    img.onerror = function () {
-      this.src = "images/logo.png";
-    };
+    img.style.borderRadius = "10px";
+    img.onerror = () => (img.src = "images/logo.png");
 
     const name = document.createElement("div");
-    const productName =
-      typeof it.name === "object"
-        ? it.name.name || JSON.stringify(it.name)
-        : it.name;
-    name.innerText = `${productName} × ${it.qty}`;
-
-    const removeBtn = document.createElement("button");
-    removeBtn.className = "remove-btn";
-    removeBtn.innerText = "🗑";
-    removeBtn.title = "Remove item";
-    removeBtn.onclick = () => {
-      const updated = getCart();
-      updated.splice(idx, 1);
-      localStorage.setItem("cart", JSON.stringify(updated));
-      renderSummary();
-    };
+    name.innerText = `${it.name}${it.variant ? " (" + it.variant + ")" : ""} × ${it.qty} = ₹${lineTotal}`;
 
     left.appendChild(img);
     left.appendChild(name);
 
     const right = document.createElement("div");
-    right.innerText = "₹" + (priceVal * it.qty).toFixed(0);
+    right.innerText = "₹" + lineTotal;
 
     line.appendChild(left);
-    line.appendChild(removeBtn);
     line.appendChild(right);
     itemsEl.appendChild(line);
 
-    total += priceVal * it.qty;
+    total += lineTotal;
   });
 
   totalEl.innerText = total.toFixed(0);
 }
 
-function validateForm(name, phone, address, state, pin, txn) {
-  if (!name) return "Enter your name";
-  if (!/^[0-9]{10}$/.test(phone)) return "Phone must be 10 digits";
-  if (!address) return "Enter address";
-  if (!state) return "Select a state";
-  if (!/^[0-9]{6}$/.test(pin)) return "Pincode must be 6 digits";
-  if (!txn) return "Enter Transaction ID";
+/* Validation */
+function validateForm(name, phone, addr, state, pin, txn) {
+  if (!name) return "Enter full name";
+  if (!/^\d{10}$/.test(phone)) return "Phone must be 10 digits";
+  if (!addr) return "Enter address";
+  if (!state) return "Select state";
+  if (!/^\d{6}$/.test(pin)) return "Pincode must be 6 digits";
+  if (!txn) return "Enter transaction ID";
   return "";
 }
 
-function submitOrder(order) {
-  const orders = JSON.parse(localStorage.getItem("cv_orders") || "[]");
-  orders.unshift(order);
-  localStorage.setItem("cv_orders", JSON.stringify(orders));
-  localStorage.removeItem("cart");
-}
-
+/* Submit order */
 document.addEventListener("DOMContentLoaded", () => {
   renderSummary();
 
-  const phone = document.getElementById("cus-phone");
-  const pin = document.getElementById("cus-pincode");
-  if (phone)
-    phone.addEventListener(
-      "input",
-      () => (phone.value = phone.value.replace(/\D/g, "").slice(0, 10))
-    );
-  if (pin)
-    pin.addEventListener(
-      "input",
-      () => (pin.value = pin.value.replace(/\D/g, "").slice(0, 6))
-    );
+  const phoneEl = document.getElementById("cus-phone");
+  if (phoneEl) phoneEl.addEventListener("input", () => {
+    phoneEl.value = phoneEl.value.replace(/[^\d]/g, "").slice(0, 10);
+  });
 
-  const gpay = document.getElementById("gpay-btn");
-  if (gpay)
-    gpay.addEventListener("click", () => {
-      window.location.href =
-        "upi://pay?pa=zerabathool4@oksbi&pn=ClassicVapes&cu=INR";
-    });
+  const pinEl = document.getElementById("cus-pincode");
+  if (pinEl) pinEl.addEventListener("input", () => {
+    pinEl.value = pinEl.value.replace(/[^\d]/g, "").slice(0, 6);
+  });
 
-  const phonepe = document.getElementById("phonepe-btn");
-  if (phonepe)
-    phonepe.addEventListener("click", () => {
-      window.location.href =
-        "phonepe://pay?pa=zerabathool4@oksbi&pn=ClassicVapes&cu=INR";
-    });
+  document.getElementById("place-order").addEventListener("click", async () => {
+    const name = document.getElementById("cus-name").value.trim();
+    const phone = document.getElementById("cus-phone").value.trim();
+    const address = document.getElementById("cus-address-line").value.trim();
+    const state = document.getElementById("cus-state").value;
+    const pincode = document.getElementById("cus-pincode").value.trim();
+    const txn = document.getElementById("txn-id").value.trim();
+    const msg = document.getElementById("checkout-msg");
 
-  const paytm = document.getElementById("paytm-btn");
-  if (paytm)
-    paytm.addEventListener("click", () => {
-      window.location.href =
-        "paytmmp://pay?pa=zerabathool4@oksbi&pn=ClassicVapes&cu=INR";
-    });
+    const err = validateForm(name, phone, address, state, pincode, txn);
+    if (err) {
+      msg.innerText = err;
+      msg.style.color = "red";
+      return;
+    }
 
-  const placeBtn = document.getElementById("place-order");
-  if (placeBtn)
-    placeBtn.addEventListener("click", () => {
-      const name = document.getElementById("cus-name").value.trim();
-      const phone = document.getElementById("cus-phone").value.trim();
-      const address = document.getElementById("cus-address-line").value.trim();
-      const state = document.getElementById("cus-state").value;
-      const pin = document.getElementById("cus-pincode").value.trim();
-      const txn = document.getElementById("txn-id").value.trim();
-      const msgEl = document.getElementById("checkout-msg");
+    const cart = getCart();
+    if (!cart.length) {
+      msg.innerText = "Cart is empty";
+      msg.style.color = "red";
+      return;
+    }
 
-      const err = validateForm(name, phone, address, state, pin, txn);
-      if (err) {
-        msgEl.innerText = err;
-        msgEl.style.color = "red";
-        return;
-      }
+    const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+    const productsStr = cart.map(i => `${i.name} x${i.qty}`).join(", ");
+    const orderId = generateOrderId();
 
-      const cart = getCart();
-      if (!cart.length) {
-        msgEl.innerText = "Your cart is empty";
-        msgEl.style.color = "red";
-        return;
-      }
+    const orderObj = {
+      orderId,
+      date: formatDate(new Date()),
+      name,
+      phone,
+      address: `${address}, ${state} - ${pincode}`,
+      products: productsStr,
+      total,
+      txnId: txn,
+      status: "Pending"
+    };
 
-      const total = cart.reduce(
-        (sum, it) =>
-          sum +
-          (typeof it.price === "object"
-            ? it.price.offer || it.price.mrp || 0
-            : Number(it.price) || 0) *
-            (it.qty || 1),
-        0
-      );
+    localStorage.removeItem("cart");
+    renderSummary();
 
-      const orderId = generateOrderId();
-      const products = cart.map((i) => `${i.name} × ${i.qty}`).join(", ");
+    const modal = document.getElementById("order-modal");
+    const body = document.getElementById("modal-body");
+    body.innerHTML = `Order placed! Verifying payment.<br>ID: <strong>${orderId}</strong><br><small>We'll verify and confirm soon.</small>`;
+    modal.style.display = "flex";
 
-      const orderObj = {
-        orderId,
-        date: formatDate(new Date()),
-        name,
-        phone,
-        address: `${address}, ${state} - ${pin}`,
-        products,
-        total,
-        txnId: txn,
-        status: "Pending Verification",
-      };
-
-      submitOrder(orderObj);
-
-      const modal = document.getElementById("order-modal");
-      const body = document.getElementById("modal-body");
-      body.innerHTML = `Thank you, <b>${name}</b>!<br>Order <b>${orderId}</b> placed.<br>Payment under verification.`;
-      modal.style.display = "flex";
-
-      msgEl.innerText = "";
-      renderSummary();
-    });
+    msg.innerText = "";
+  });
 });
