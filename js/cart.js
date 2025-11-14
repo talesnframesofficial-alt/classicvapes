@@ -10,17 +10,15 @@ function getCart() {
     return [];
   }
 }
-
 function saveCart(cart) {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
-
 function updateCartCount() {
   const countEl = document.getElementById("cart-count");
   if (countEl) countEl.innerText = getCart().reduce((sum, i) => sum + i.qty, 0);
 }
 
-/* ---------- Add / Remove / Clear ---------- */
+/* ---------- Add / Remove ---------- */
 function addToCart(item) {
   if (!item || !item.name) return;
 
@@ -45,6 +43,15 @@ function addToCart(item) {
   saveCart(cart);
   updateCartCount();
   showToast("Added to cart");
+}
+
+/* ---------- Remove from cart ---------- */
+function removeFromCart(index) {
+  const cart = getCart();
+  cart.splice(index, 1);
+  saveCart(cart);
+  renderCart();
+  updateCartCount();
 }
 
 /* ---------- Render cart popup ---------- */
@@ -92,6 +99,12 @@ function renderCart() {
     const name = document.createElement("div");
     name.innerText = `${it.name}${it.variant ? " (" + it.variant + ")" : ""}`;
 
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "remove-btn";
+    removeBtn.innerText = "🗑";
+    removeBtn.title = "Remove item";
+    removeBtn.onclick = () => removeFromCart(idx);
+
     left.appendChild(img);
     left.appendChild(name);
 
@@ -100,6 +113,7 @@ function renderCart() {
 
     div.appendChild(left);
     div.appendChild(right);
+    div.appendChild(removeBtn);
     container.appendChild(div);
 
     total += Number(it.price) * Number(it.qty);
@@ -109,7 +123,7 @@ function renderCart() {
   updateCartCount();
 }
 
-/* ---------- Toast Message ---------- */
+/* ---------- Toast ---------- */
 function showToast(msg) {
   const t = document.createElement("div");
   t.className = "toast";
