@@ -1,15 +1,11 @@
-/* cart.js — ClassicVapes Global Cart Manager */
+/* cart.js — ClassicVapes Smart Cart Manager */
 
-/* ---------- CONFIG ---------- */
 const CART_KEY = "cart";
 
-/* ---------- Helpers ---------- */
+/* Helpers */
 function getCart() {
-  try {
-    return JSON.parse(localStorage.getItem(CART_KEY)) || [];
-  } catch (e) {
-    return [];
-  }
+  try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
+  catch (e) { return []; }
 }
 
 function saveCart(cart) {
@@ -24,11 +20,11 @@ function updateCartCount() {
   }
 }
 
-/* ---------- Add / Remove ---------- */
+/* Add to cart */
 function addToCart(item) {
   if (!item || !item.name) return;
-
   const cart = getCart();
+
   const existing = cart.find(
     (c) => c.id === item.id && c.variant === item.variant
   );
@@ -51,7 +47,7 @@ function addToCart(item) {
   showToast("Added to cart");
 }
 
-/* ---------- Remove ---------- */
+/* Remove */
 function removeFromCart(index) {
   const cart = getCart();
   cart.splice(index, 1);
@@ -60,16 +56,7 @@ function removeFromCart(index) {
   updateCartCount();
 }
 
-/* ---------- Cart Popup ---------- */
-function toggleCart() {
-  const cart = document.getElementById("cart");
-  if (cart) {
-    const visible = cart.style.display === "block";
-    cart.style.display = visible ? "none" : "block";
-    if (!visible) renderCart();
-  }
-}
-
+/* Render Cart */
 function renderCart() {
   const items = getCart();
   const container = document.getElementById("cart-items");
@@ -90,7 +77,6 @@ function renderCart() {
     const div = document.createElement("div");
     div.className = "cart-item";
 
-    // Left section
     const left = document.createElement("div");
     left.className = "cart-left";
 
@@ -100,23 +86,17 @@ function renderCart() {
     img.width = 48;
     img.height = 48;
     img.style.borderRadius = "10px";
-    img.onerror = function () {
-      this.src = "images/logo.png";
-    };
+    img.onerror = () => (img.src = "images/logo.png");
 
     const name = document.createElement("div");
     const lineTotal = (Number(it.price) * Number(it.qty)).toFixed(0);
-    name.innerText = `${it.name}${it.variant ? " (" + it.variant + ")" : ""} × ${
-      it.qty
-    } = ₹${lineTotal}`;
+    name.innerText = `${it.name}${it.variant ? " (" + it.variant + ")" : ""} × ${it.qty} = ₹${lineTotal}`;
 
     left.appendChild(img);
     left.appendChild(name);
 
-    // Right section
     const right = document.createElement("div");
     right.className = "cart-right";
-
     const price = document.createElement("span");
     price.className = "cart-price";
     price.innerText = "₹" + lineTotal;
@@ -141,19 +121,28 @@ function renderCart() {
   updateCartCount();
 }
 
-/* ---------- Toast ---------- */
+/* Toast */
 function showToast(msg) {
   const t = document.createElement("div");
   t.className = "toast";
   t.innerText = msg;
   document.body.appendChild(t);
-
   setTimeout(() => (t.style.opacity = "1"), 10);
   setTimeout(() => (t.style.opacity = "0"), 2000);
   setTimeout(() => t.remove(), 2500);
 }
 
-/* ---------- Init ---------- */
+/* Toggle cart popup */
+function toggleCart() {
+  const cart = document.getElementById("cart");
+  if (cart) {
+    const visible = cart.style.display === "block";
+    cart.style.display = visible ? "none" : "block";
+    if (!visible) renderCart();
+  }
+}
+
+/* Init */
 document.addEventListener("DOMContentLoaded", updateCartCount);
 window.addToCart = addToCart;
 window.toggleCart = toggleCart;
