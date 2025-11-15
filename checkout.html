@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -42,9 +42,9 @@
     <p style="margin-top:12px">UPI ID: <strong id="upi-id">zerabathool4@oksbi</strong></p>
 
     <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
-      <button id="gpay-btn" class="btn-primary" style="padding:10px 16px;width:auto">Open GPay</button>
-      <button id="phonepe-btn" class="btn-primary" style="padding:10px 16px;width:auto">Open PhonePe</button>
-      <button id="paytm-btn" class="btn-primary" style="padding:10px 16px;width:auto">Open PayTM</button>
+      <button id="gpay-btn" class="btn-primary" style="padding:10px 16px;width:auto;max-width:140px">Open GPay</button>
+      <button id="phonepe-btn" class="btn-primary" style="padding:10px 16px;width:auto;max-width:140px">Open PhonePe</button>
+      <button id="paytm-btn" class="btn-primary" style="padding:10px 16px;width:auto;max-width:140px">Open PayTM</button>
     </div>
   </section>
 
@@ -78,14 +78,15 @@
   </section>
 </main>
 
-<!-- success modal (hidden) -->
-<div id="order-modal" class="product-popup" style="display:none">
-  <div class="popup-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+<!-- success modal (uses your product-popup / popup-card styles) -->
+<div id="order-modal" class="product-popup" aria-hidden="true">
+  <div class="popup-card" role="dialog" aria-modal="true" aria-labelledby="modal-title" style="max-width:420px; width:94%;">
     <button class="popup-close" aria-label="Close">✕</button>
     <div style="padding:6px 14px;text-align:center">
-      <h2 id="modal-title">Order placed!</h2>
-      <p id="modal-body" style="margin:8px 0;color:#333"></p>
-      <div style="display:flex;gap:10px;justify-content:center;margin-top:12px">
+      <h2 id="modal-title" style="margin:0 0 6px">Order placed!</h2>
+      <!-- modal-body will be filled by JS -->
+      <div id="modal-body" style="margin:8px 0;color:#333;text-align:left"></div>
+      <div id="modal-actions" style="display:flex;gap:10px;justify-content:center;margin-top:12px">
         <button id="modal-orders" class="view-btn">View Orders</button>
         <button id="modal-home" class="buy-btn">Continue Shopping</button>
       </div>
