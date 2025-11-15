@@ -251,11 +251,13 @@ document.addEventListener("DOMContentLoaded", () => {
     saveOrders(orders);
 
     /* SEND TO GOOGLE SHEET */
-    fetch("https://script.google.com/macros/s/AKfycbwvY6jQatuREzKr-sMdgD8PZqvPUeEG5uuaqXd-jjGE8Hq_w_UB-7HwYBjUSn8Lyiue/exec", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(orderObj)
-    }).catch(err => console.error(err));
+  fetch("https://script.google.com/macros/s/AKfycbwvY6jQatuREzKr-sMdgD8PZqvPUeEG5uuaqXd-jjGE8Hq_w_UB-7HwYBjUSn8Lyiue/exec", {
+  method: "POST",
+  mode: "no-cors",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(orderObj)
+});
+.catch(err => console.error(err));
 
     /* CLEAR CART */
     localStorage.removeItem("cart");
