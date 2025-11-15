@@ -1,14 +1,7 @@
 /* ===========================================================
-   ClassicVapes — FULL CHECKOUT.JS (FINAL VERSION)
-   With:
-   ✔ Order Summary
-   ✔ Validation
-   ✔ Modal Popup
-   ✔ Local Order Save
-   ✔ Google Sheet Integration
+   ClassicVapes — FINAL CHECKOUT.JS (Google Sheets + Modal)
    =========================================================== */
 
-/* CART FUNCTIONS */
 function getCart() {
   try { return JSON.parse(localStorage.getItem("cart")) || []; }
   catch { return []; }
@@ -18,7 +11,6 @@ function saveCart(cart) {
   localStorage.setItem("cart", JSON.stringify(cart));
 }
 
-/* ORDERS (local) */
 function getOrders() {
   try { return JSON.parse(localStorage.getItem("orders")) || []; }
   catch { return []; }
@@ -28,7 +20,6 @@ function saveOrders(orders) {
   localStorage.setItem("orders", JSON.stringify(orders));
 }
 
-/* UTILS */
 function formatDate(d) {
   return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
 }
@@ -45,7 +36,7 @@ function removeItem(index) {
   renderSummary();
 }
 
-/* RENDER SUMMARY */
+/* RENDER CHECKOUT SUMMARY */
 function renderSummary() {
   const cart = getCart();
   const itemsEl = document.getElementById("order-items");
@@ -54,7 +45,6 @@ function renderSummary() {
   if (!itemsEl || !totalEl) return;
 
   itemsEl.innerHTML = "";
-
   if (!cart.length) {
     itemsEl.innerHTML = "<p>Your cart is empty.</p>";
     totalEl.innerText = "0";
@@ -80,12 +70,12 @@ function renderSummary() {
     img.src = it.image || "images/logo.png";
     img.onerror = () => (img.src = "images/logo.png");
 
-    const nameWrap = document.createElement("div");
-    nameWrap.style.fontWeight = "600";
-    nameWrap.innerText = `${it.name}${it.variant ? " (" + it.variant + ")" : ""} × ${qtyNum}`;
+    const name = document.createElement("div");
+    name.style.fontWeight = "600";
+    name.innerText = `${it.name}${it.variant ? " ("+it.variant+")" : ""} × ${qtyNum}`;
 
     left.appendChild(img);
-    left.appendChild(nameWrap);
+    left.appendChild(name);
 
     const right = document.createElement("div");
     right.style.display = "flex";
@@ -93,7 +83,7 @@ function renderSummary() {
     right.style.gap = "10px";
 
     const price = document.createElement("span");
-    price.innerText = "₹" + lineTotal.toFixed(0);
+    price.innerText = "₹" + lineTotal;
 
     const remove = document.createElement("button");
     remove.className = "remove-btn";
@@ -110,10 +100,10 @@ function renderSummary() {
     total += lineTotal;
   });
 
-  totalEl.innerText = total.toFixed(0);
+  totalEl.innerText = total;
 }
 
-/* FORM VALIDATION */
+/* VALIDATION */
 function validateForm(name, phone, addr, state, pin, txn) {
   if (!name) return "Enter full name";
   if (!/^\d{10}$/.test(phone)) return "Phone must be 10 digits";
@@ -124,43 +114,33 @@ function validateForm(name, phone, addr, state, pin, txn) {
   return "";
 }
 
-/* MODAL FUNCTIONS */
+/* MODAL */
 function showModal(html) {
   const modal = document.getElementById("order-modal");
   const body = document.getElementById("modal-body");
-
-  if (!modal || !body) return;
-
   body.innerHTML = html;
-
   modal.style.display = "flex";
   modal.classList.add("popup-show");
-  modal.setAttribute("aria-hidden", "false");
 }
 
 function hideModal() {
   const modal = document.getElementById("order-modal");
-  if (!modal) return;
   modal.style.display = "none";
   modal.classList.remove("popup-show");
-  modal.setAttribute("aria-hidden", "true");
 }
 
-/* VIEW ORDERS HTML */
+/* VIEW ORDERS LIST */
 function buildOrdersHtml() {
   const orders = getOrders();
-  if (!orders.length) return "<p style='text-align:center;color:#666'>No orders yet.</p>";
+  if (!orders.length) return "<p>No orders yet.</p>";
 
   return `
-    <div style="max-height:60vh;overflow:auto;padding:8px">
+    <div style="max-height:60vh;overflow:auto;">
       ${orders.slice().reverse().map(o => `
-        <div style="background:#fff;border-radius:12px;padding:12px;box-shadow:0 8px 20px rgba(0,0,0,0.05);margin-bottom:10px">
-          <strong>${o.orderId}</strong>
-          <div style="font-size:14px;margin:4px 0;color:#444">${o.products}</div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;color:#666">
-            <span>${o.date}</span>
-            <span>₹${o.total}</span>
-          </div>
+        <div style="background:#fff;margin-bottom:10px;padding:12px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.05)">
+          <strong>${o.orderId}</strong><br>
+          <span style="font-size:14px;color:#444">${o.products}</span><br>
+          <span style="font-size:12px;color:#666">${o.date}</span>
         </div>
       `).join("")}
     </div>
@@ -174,23 +154,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const phoneEl = document.getElementById("cus-phone");
   if (phoneEl) phoneEl.addEventListener("input", () => {
-    phoneEl.value = phoneEl.value.replace(/[^\d]/g, "").slice(0, 10);
+    phoneEl.value = phoneEl.value.replace(/\D/g, "").slice(0, 10);
   });
 
   const pinEl = document.getElementById("cus-pincode");
   if (pinEl) pinEl.addEventListener("input", () => {
-    pinEl.value = pinEl.value.replace(/[^\d]/g, "").slice(0, 6);
+    pinEl.value = pinEl.value.replace(/\D/g, "").slice(0, 6);
   });
 
   /* CLOSE MODAL */
   const modal = document.getElementById("order-modal");
-  if (modal) {
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) hideModal();
-    });
-    const closeBtn = modal.querySelector(".popup-close");
-    if (closeBtn) closeBtn.addEventListener("click", hideModal);
-  }
+  const closeBtn = document.querySelector(".popup-close");
+  if (closeBtn) closeBtn.addEventListener("click", hideModal);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) hideModal();
+  });
 
   document.getElementById("modal-home")?.addEventListener("click", () => {
     hideModal();
@@ -198,13 +176,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("modal-orders")?.addEventListener("click", () => {
-    showModal(`<h3 style="text-align:center">Your Orders</h3>${buildOrdersHtml()}`);
+    showModal("<h3>Your Orders</h3>" + buildOrdersHtml());
   });
 
   /* PLACE ORDER */
   const btn = document.getElementById("place-order");
-  if (!btn) return;
-
   btn.addEventListener("click", () => {
 
     const name = document.getElementById("cus-name").value.trim();
@@ -250,14 +226,13 @@ document.addEventListener("DOMContentLoaded", () => {
     orders.push(orderObj);
     saveOrders(orders);
 
-    /* SEND TO GOOGLE SHEET */
-  fetch("https://script.google.com/macros/s/AKfycbwvY6jQatuREzKr-sMdgD8PZqvPUeEG5uuaqXd-jjGE8Hq_w_UB-7HwYBjUSn8Lyiue/exec", {
-  method: "POST",
-  mode: "no-cors",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(orderObj)
-});
-.catch(err => console.error(err));
+    /* SEND TO GOOGLE SHEET (NO-CORS FIX) */
+    fetch("https://script.google.com/macros/s/AKfycbwvY6jQatuREzKr-sMdgD8PZqvPUeEG5uuaqXd-jjGE8Hq_w_UB-7HwYBjUSn8Lyiue/exec", {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderObj)
+    });
 
     /* CLEAR CART */
     localStorage.removeItem("cart");
@@ -265,16 +240,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /* SHOW SUCCESS MODAL */
     showModal(`
-      <p style="color:#666;margin-bottom:10px">We're verifying your payment.</p>
-      <div style="background:#fff;padding:12px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.05);margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between">
-          <strong>Order ID</strong>
-          <strong>${orderId}</strong>
-        </div>
-        <div style="margin-top:6px;font-size:14px;color:#444">Amount: ₹${total}</div>
-        <div style="margin-top:4px;font-size:13px;color:#666"><strong>Products:</strong> ${productsStr}</div>
+      <p>We're verifying your payment.</p>
+      <div style="background:#fff;padding:12px;border-radius:12px;margin:10px 0">
+        <strong>Order ID:</strong> ${orderId}<br>
+        <strong>Total:</strong> ₹${total}<br>
+        <strong>Products:</strong> ${productsStr}
       </div>
-      <small style="color:#777">We’ll confirm shortly. Thank you!</small>
+      <small>Thank you for shopping with ClassicVapes!</small>
     `);
 
     msg.innerText = "";
