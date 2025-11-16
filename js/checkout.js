@@ -1,187 +1,145 @@
 /* ===========================================================
-   ClassicVapes — FINAL CHECKOUT.JS (Google Sheets + Modal)
+   ClassicVapes — FINAL CHECKOUT.JS  (Supabase Integrated)
    =========================================================== */
 
-function getCart() {
-  try { return JSON.parse(localStorage.getItem("cart")) || []; }
-  catch { return []; }
-}
+const SUPABASE_URL = "https://njflcjdgowjmvfipexwy.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZmxjamRnb3dqbXZmaXBleHd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNzE4OTcsImV4cCI6MjA3ODg0Nzg5N30.dKKMdJIvN8avxUMtr9gZECnbLLJO6HjEGWuYeNFqh-g";
 
-function saveCart(cart) {
-  localStorage.setItem("cart", JSON.stringify(cart));
-}
+/* ---------- CART ---------- */
+function getCart(){ try{return JSON.parse(localStorage.getItem("cart"))||[]}catch{return[]} }
+function saveCart(c){ localStorage.setItem("cart",JSON.stringify(c)) }
 
-function getOrders() {
-  try { return JSON.parse(localStorage.getItem("orders")) || []; }
-  catch { return []; }
-}
+/* ---------- LOCAL ORDERS ---------- */
+function getOrders(){ try{return JSON.parse(localStorage.getItem("orders"))||[]}catch{return[]} }
+function saveOrders(o){ localStorage.setItem("orders",JSON.stringify(o)) }
 
-function saveOrders(orders) {
-  localStorage.setItem("orders", JSON.stringify(orders));
-}
+/* ---------- HELPERS ---------- */
+const formatDate = d => `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
+const generateOrderId = ()=> "CV"+Math.floor(Math.random()*90000+10000);
 
-function formatDate(d) {
-  return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
-}
-
-function generateOrderId() {
-  return "CV" + Math.floor(Math.random() * 90000 + 10000);
-}
-
-/* REMOVE ITEM */
-function removeItem(index) {
+/* ---------- RENDER SUMMARY ---------- */
+function renderSummary(){
   const cart = getCart();
-  cart.splice(index, 1);
-  saveCart(cart);
-  renderSummary();
-}
-
-/* RENDER CHECKOUT SUMMARY */
-function renderSummary() {
-  const cart = getCart();
-  const itemsEl = document.getElementById("order-items");
+  const items = document.getElementById("order-items");
   const totalEl = document.getElementById("order-total");
+  if(!items||!totalEl) return;
 
-  if (!itemsEl || !totalEl) return;
-
-  itemsEl.innerHTML = "";
-  if (!cart.length) {
-    itemsEl.innerHTML = "<p>Your cart is empty.</p>";
+  items.innerHTML = "";
+  if(!cart.length){
+    items.innerHTML = "<p>Your cart is empty.</p>";
     totalEl.innerText = "0";
     return;
   }
 
   let total = 0;
 
-  cart.forEach((it, i) => {
-    const priceNum = Number(it.price || 0);
-    const qtyNum = Number(it.qty || 1);
-    const lineTotal = priceNum * qtyNum;
+  cart.forEach((it,i)=>{
+    const qty = Number(it.qty||1);
+    const price = Number(it.price||0);
+    const line = price*qty;
+    total += line;
 
-    const line = document.createElement("div");
-    line.className = "order-item";
+    const div = document.createElement("div");
+    div.className = "order-item";
 
-    const left = document.createElement("div");
-    left.style.display = "flex";
-    left.style.alignItems = "center";
-    left.style.gap = "12px";
+    div.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px">
+        <img src="${it.image||"images/logo.png"}" width="55" height="55" style="border-radius:14px" onerror="this.src='images/logo.png'">
+        <strong>${it.name}${it.variant?` (${it.variant})`:""} × ${qty}</strong>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <strong>₹${line}</strong>
+        <button class="remove-btn">🗑</button>
+      </div>
+    `;
 
-    const img = document.createElement("img");
-    img.src = it.image || "images/logo.png";
-    img.onerror = () => (img.src = "images/logo.png");
-
-    const name = document.createElement("div");
-    name.style.fontWeight = "600";
-    name.innerText = `${it.name}${it.variant ? " ("+it.variant+")" : ""} × ${qtyNum}`;
-
-    left.appendChild(img);
-    left.appendChild(name);
-
-    const right = document.createElement("div");
-    right.style.display = "flex";
-    right.style.alignItems = "center";
-    right.style.gap = "10px";
-
-    const price = document.createElement("span");
-    price.innerText = "₹" + lineTotal;
-
-    const remove = document.createElement("button");
-    remove.className = "remove-btn";
-    remove.innerText = "🗑";
-    remove.onclick = () => removeItem(i);
-
-    right.appendChild(price);
-    right.appendChild(remove);
-
-    line.appendChild(left);
-    line.appendChild(right);
-    itemsEl.appendChild(line);
-
-    total += lineTotal;
+    div.querySelector(".remove-btn").onclick = ()=> removeItem(i);
+    items.appendChild(div);
   });
 
   totalEl.innerText = total;
 }
 
-/* VALIDATION */
-function validateForm(name, phone, addr, state, pin, txn) {
-  if (!name) return "Enter full name";
-  if (!/^\d{10}$/.test(phone)) return "Phone must be 10 digits";
-  if (!addr) return "Enter address";
-  if (!state) return "Select state";
-  if (!/^\d{6}$/.test(pin)) return "Pincode must be 6 digits";
-  if (!txn) return "Enter transaction ID";
+function removeItem(i){
+  const cart = getCart();
+  cart.splice(i,1);
+  saveCart(cart);
+  renderSummary();
+}
+
+/* ---------- FORM VALIDATION ---------- */
+function validateForm(name,phone,addr,state,pin,txn){
+  if(!name) return "Enter full name";
+  if(!/^\d{10}$/.test(phone)) return "Phone must be 10 digits";
+  if(!addr) return "Enter address";
+  if(!state) return "Select state";
+  if(!/^\d{6}$/.test(pin)) return "Pincode must be 6 digits";
+  if(!txn) return "Enter UPI Transaction ID";
   return "";
 }
 
-/* MODAL */
-function showModal(html) {
+/* ---------- MODAL ---------- */
+function showModal(html){
   const modal = document.getElementById("order-modal");
   const body = document.getElementById("modal-body");
   body.innerHTML = html;
   modal.style.display = "flex";
   modal.classList.add("popup-show");
 }
-
-function hideModal() {
+function hideModal(){
   const modal = document.getElementById("order-modal");
   modal.style.display = "none";
   modal.classList.remove("popup-show");
 }
 
-/* VIEW ORDERS LIST */
-function buildOrdersHtml() {
-  const orders = getOrders();
-  if (!orders.length) return "<p>No orders yet.</p>";
+/* ---------- SUPABASE INSERT ---------- */
+async function insertOrderToSupabase(order){
+  const url = `${SUPABASE_URL}/rest/v1/orders`;
 
-  return `
-    <div style="max-height:60vh;overflow:auto;">
-      ${orders.slice().reverse().map(o => `
-        <div style="background:#fff;margin-bottom:10px;padding:12px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.05)">
-          <strong>${o.orderId}</strong><br>
-          <span style="font-size:14px;color:#444">${o.products}</span><br>
-          <span style="font-size:12px;color:#666">${o.date}</span>
-        </div>
-      `).join("")}
-    </div>
-  `;
+  try{
+    const res = await fetch(url,{
+      method:"POST",
+      headers:{
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type":"application/json",
+        "Prefer":"return=minimal"
+      },
+      body: JSON.stringify(order)
+    });
+
+    return res.ok;
+  }catch(err){
+    console.error("Supabase error:",err);
+    return false;
+  }
 }
 
-/* MAIN */
-document.addEventListener("DOMContentLoaded", () => {
+/* ---------- MAIN ---------- */
+document.addEventListener("DOMContentLoaded",()=>{
 
   renderSummary();
 
-  const phoneEl = document.getElementById("cus-phone");
-  if (phoneEl) phoneEl.addEventListener("input", () => {
-    phoneEl.value = phoneEl.value.replace(/\D/g, "").slice(0, 10);
+  // Input masks  
+  document.getElementById("cus-phone")?.addEventListener("input",e=>{
+    e.target.value = e.target.value.replace(/\D/g,"").slice(0,10);
+  });
+  document.getElementById("cus-pincode")?.addEventListener("input",e=>{
+    e.target.value = e.target.value.replace(/\D/g,"").slice(0,6);
   });
 
-  const pinEl = document.getElementById("cus-pincode");
-  if (pinEl) pinEl.addEventListener("input", () => {
-    pinEl.value = pinEl.value.replace(/\D/g, "").slice(0, 6);
+  // Modal events  
+  document.querySelector(".popup-close")?.addEventListener("click", hideModal);
+  document.getElementById("order-modal")?.addEventListener("click",e=>{
+    if(e.target===e.currentTarget) hideModal();
   });
-
-  /* CLOSE MODAL */
-  const modal = document.getElementById("order-modal");
-  const closeBtn = document.querySelector(".popup-close");
-  if (closeBtn) closeBtn.addEventListener("click", hideModal);
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) hideModal();
-  });
-
-  document.getElementById("modal-home")?.addEventListener("click", () => {
+  document.getElementById("modal-home")?.addEventListener("click",()=>{
     hideModal();
-    window.location.href = "index.html";
+    window.location.href="index.html";
   });
 
-  document.getElementById("modal-orders")?.addEventListener("click", () => {
-    showModal("<h3>Your Orders</h3>" + buildOrdersHtml());
-  });
-
-  /* PLACE ORDER */
-  const btn = document.getElementById("place-order");
-  btn.addEventListener("click", () => {
+  // PLACE ORDER  
+  document.getElementById("place-order")?.addEventListener("click", async ()=>{
 
     const name = document.getElementById("cus-name").value.trim();
     const phone = document.getElementById("cus-phone").value.trim();
@@ -191,22 +149,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const txn = document.getElementById("txn-id").value.trim();
     const msg = document.getElementById("checkout-msg");
 
-    const err = validateForm(name, phone, address, state, pincode, txn);
-    if (err) {
-      msg.innerText = err;
-      msg.style.color = "red";
-      return;
-    }
+    const err = validateForm(name,phone,address,state,pincode,txn);
+    if(err){ msg.innerText = err; msg.style.color="red"; return; }
 
     const cart = getCart();
-    if (!cart.length) {
-      msg.innerText = "Cart is empty";
-      msg.style.color = "red";
-      return;
-    }
+    if(!cart.length){ msg.innerText="Cart is empty"; msg.style.color="red"; return; }
 
-    const total = cart.reduce((s, i) => s + Number(i.price) * Number(i.qty), 0);
-    const productsStr = cart.map(i => `${i.name} x${i.qty}`).join(", ");
+    const total = cart.reduce((s,i)=> s + (Number(i.price)*Number(i.qty)), 0);
+    const productsStr = cart.map(i=> `${i.name} x${i.qty}`).join(", ");
     const orderId = generateOrderId();
 
     const orderObj = {
@@ -221,34 +171,31 @@ document.addEventListener("DOMContentLoaded", () => {
       status: "Pending"
     };
 
-    /* SAVE LOCALLY */
+    // Save locally  
     const orders = getOrders();
     orders.push(orderObj);
     saveOrders(orders);
 
-    /* SEND TO GOOGLE SHEET (NO-CORS FIX) */
-    fetch("https://script.google.com/macros/s/AKfycbwvY6jQatuREzKr-sMdgD8PZqvPUeEG5uuaqXd-jjGE8Hq_w_UB-7HwYBjUSn8Lyiue/exec", {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(orderObj)
-    });
+    // Insert to Supabase  
+    const ok = await insertOrderToSupabase(orderObj);
+    console.log("Supabase insert:", ok);
 
-    /* CLEAR CART */
+    // Clear cart and update UI  
     localStorage.removeItem("cart");
     renderSummary();
 
-    /* SHOW SUCCESS MODAL */
+    // Modal  
     showModal(`
-      <p>We're verifying your payment.</p>
-      <div style="background:#fff;padding:12px;border-radius:12px;margin:10px 0">
+      <p style="margin-bottom:6px;color:#444">We're verifying your payment.</p>
+      <div style="background:#fff;padding:12px;border-radius:12px;margin-bottom:10px;box-shadow:0 6px 18px rgba(0,0,0,0.05)">
         <strong>Order ID:</strong> ${orderId}<br>
         <strong>Total:</strong> ₹${total}<br>
         <strong>Products:</strong> ${productsStr}
       </div>
-      <small>Thank you for shopping with ClassicVapes!</small>
+      <small style="color:#777">Thank you for shopping with ClassicVapes!</small>
     `);
 
     msg.innerText = "";
   });
+
 });
