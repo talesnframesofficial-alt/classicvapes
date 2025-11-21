@@ -24,6 +24,36 @@
     <button class="popup-close" style="position:absolute;right:15px;top:15px;">✕</button>
   </div>
 </div>
+  <script>
+// Show age gate only on FIRST visit to home page
+document.addEventListener("DOMContentLoaded", () => {
+
+  // If already verified → do nothing
+  if (localStorage.getItem("cv_ageVerified") === "true") return;
+
+  const popup = document.getElementById("age-gate");
+  popup.style.display = "flex";
+  popup.classList.add("popup-show");
+
+  // User confirms 18+
+  document.getElementById("age-yes").onclick = () => {
+    localStorage.setItem("cv_ageVerified", "true");
+    popup.style.display = "none";
+    popup.classList.remove("popup-show");
+  };
+
+  // User declines
+  const deny = () => {
+    alert("Sorry, you must be 18+ to access this site.");
+    window.location.href = "https://google.com";
+  };
+
+  document.getElementById("age-no").onclick = deny;
+  document.querySelector("#age-gate .popup-close").onclick = deny;
+
+});
+</script>
+
 
 <body>
 
