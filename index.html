@@ -7,6 +7,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
+  <!-- AGE VERIFICATION POPUP (HOME PAGE ONLY) -->
+<div id="age-gate" class="product-popup" style="display:none;z-index:3000;">
+  <div class="popup-card" style="max-width:380px;text-align:center;padding:24px;position:relative;">
+    
+    <h2 style="margin-bottom:10px;">18+ Only</h2>
+    <p style="color:#444;margin-bottom:18px;">
+      You must be at least <strong>18 years old</strong> to enter ClassicVapes.
+    </p>
+
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;">
+      <button id="age-yes" class="buy-btn" style="padding:12px 20px;width:120px;font-size:16px;">I am 18+</button>
+      <button id="age-no" class="view-btn" style="padding:12px 20px;width:120px;font-size:16px;">No</button>
+    </div>
+
+    <button class="popup-close" style="position:absolute;right:15px;top:15px;">✕</button>
+  </div>
+</div>
+
 <body>
 
 <header class="top-header">
