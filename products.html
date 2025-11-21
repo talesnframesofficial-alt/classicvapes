@@ -1,43 +1,51 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta name="description" content="ClassicVapes — premium 0% nicotine vape devices, disposables & pods. 18+ only. Fast delivery, best prices.">
-<meta name="keywords" content="vape, vaping, disposable vape, 0% nicotine vape, pods, flavours, classic vapes India">
-<meta name="author" content="ClassicVapes">
-
-<!-- Open Graph (WhatsApp / Instagram preview) -->
-<meta property="og:title" content="ClassicVapes — Premium 0% Nicotine Vapes">
-<meta property="og:description" content="Explore premium vaping devices. 18+ Only. Available in multiple flavours.">
-<meta property="og:image" content="https://classicvapes.in/images/og.jpg">
-<meta property="og:url" content="https://classicvapes.in">
-<meta property="og:type" content="website">
-
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Products — ClassicVapes</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://classicvapes.in/products.html">
+
+  <!-- SEO Tags -->
+  <meta name="description" content="ClassicVapes — premium vape devices, disposables & pods. 18+ only.">
+  <meta name="keywords" content="vape, vaping, disposable vape, pods, flavours, classic vapes India">
+  <meta name="author" content="ClassicVapes">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="ClassicVapes — Products">
+  <meta property="og:description" content="Explore premium vaping devices. 18+ Only.">
+  <meta property="og:image" content="https://classicvapes.in/images/og.jpg">
+  <meta property="og:url" content="https://classicvapes.in/products.html">
+  <meta property="og:type" content="website">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Google Verification -->
+  <meta name="google-site-verification" content="ifU64Wxzd2GMdiP6lGA6UVH4ydAI4FRYQRxHCDSklYA" />
+
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
-  <meta name="google-site-verification" content="ifU64Wxzd2GMdiP6lGA6UVH4ydAI4FRYQRxHCDSklYA" />
 </head>
+
 <body>
 
 <header class="top-header">
   <div class="header-left">
     <a href="index.html">
-      <img src="images/logo.png" class="logo" alt="ClassicVapes" onerror="this.onerror=null;this.src='images/logo.png'">
+      <img src="images/logo.png" class="logo" alt="ClassicVapes">
     </a>
   </div>
   <div class="header-right">
     <nav class="nav-links">
       <a href="index.html">Home</a>
-      <a href="products.html">Products</a>
+      <a href="products.html" aria-current="page">Products</a>
       <a href="checkout.html">Checkout</a>
     </nav>
     <button class="cart-btn" onclick="toggleCart()">
-      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M7 4h-2l-3 9v2h2l1 5h14l1-5h2v-2l-3-9h-2m-2 0h-6m-1 0l-1 3h10l-1-3m-7 7h10l1 4h-12l1-4zm2 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" fill="currentColor"/></svg> 
+      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M7 4h-2l-3 9v2h2l1 5h14l1-5h2v-2l-3-9h-2m-2 0h-6m-1 0l-1 3h10l-1-3m-7 7h10l1 4h-12l1-4zm2 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" fill="currentColor"/></svg>
       <span id="cart-count">0</span>
     </button>
     <button class="hamburger" onclick="document.body.classList.toggle('nav-open')">☰</button>
@@ -46,32 +54,33 @@
 
 <main>
 
-  <!-- ✅ SEARCH BAR ADDED -->
+  <!-- Hidden H1 for SEO -->
+  <h1 style="display:none;">Buy Premium Vape Devices – ClassicVapes Products</h1>
+
   <div class="search-wrap" style="padding:16px; text-align:center;">
-    <input id="search-box" type="text" placeholder="Search products..." 
+    <input id="search-box" type="text" placeholder="Search products..."
       style="width:90%;max-width:400px;padding:12px;border-radius:8px;border:1px solid #ddd;font-size:16px;">
   </div>
 
-  <!-- ✅ PRODUCTS GRID (already present, kept as is) -->
   <section class="products-list">
     <div class="products-grid" id="products-grid"></div>
   </section>
 
 </main>
 
-<!-- ✅ CART (already present, kept as is) -->
-<div class="cart" id="cart" aria-hidden="true">
+<!-- Cart -->
+<div class="cart" id="cart">
   <h3>Your Cart</h3>
   <div id="cart-items"></div>
   <p class="cart-total">Total: ₹<span id="total">0</span></p>
   <button class="checkout-btn" onclick="location.href='checkout.html'">Checkout</button>
 </div>
 
-<!-- ✅ PRODUCT POPUP ADDED (FIXES YOUR CLICK BUG + VARIANTS + ADD TO CART) -->
+<!-- Popup -->
 <div id="product-popup" class="product-popup" style="display:none;">
   <div class="popup-card">
     <button id="popup-close" class="popup-close">✕</button>
-    
+
     <div class="popup-media">
       <img id="popup-img" src="" alt="Product">
     </div>
@@ -91,8 +100,6 @@
   </div>
 </div>
 
-
-<!-- ✅ LOAD SCRIPTS -->
 <script src="js/cart.js" defer></script>
 <script src="js/products.js" defer></script>
 
