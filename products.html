@@ -8,22 +8,23 @@
   <!-- Canonical URL -->
   <link rel="canonical" href="https://classicvapes.in/products.html">
 
-  <!-- SEO Tags -->
-  <meta name="description" content="ClassicVapes — premium vape devices, disposables & pods. 18+ only.">
+  <!-- Basic SEO / Indexing -->
+  <meta name="description" content="ClassicVapes — premium vape devices, disposables & pods. Browse flavours and devices. 18+ only. Fast delivery in India.">
   <meta name="keywords" content="vape, vaping, disposable vape, pods, flavours, classic vapes India">
   <meta name="author" content="ClassicVapes">
+  <meta name="robots" content="index, follow">
 
-  <!-- Open Graph -->
+  <!-- Open Graph (use your image path; replace with /images/og.jpg after upload) -->
   <meta property="og:title" content="ClassicVapes — Products">
-  <meta property="og:description" content="Explore premium vaping devices. 18+ Only.">
-  <meta property="og:image" content="https://classicvapes.in/images/og.jpg">
+  <meta property="og:description" content="Explore our premium collection of vape devices and flavours. 18+ Only. Shop disposables, pods & kits.">
+  <meta property="og:image" content="/mnt/data/A_digital_graphic_design_of_branding_promotional_m.png">
   <meta property="og:url" content="https://classicvapes.in/products.html">
   <meta property="og:type" content="website">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
 
-  <!-- Google Verification -->
+  <!-- Google site verification -->
   <meta name="google-site-verification" content="ifU64Wxzd2GMdiP6lGA6UVH4ydAI4FRYQRxHCDSklYA" />
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -54,29 +55,86 @@
 
 <main>
 
-  <!-- Hidden H1 for SEO -->
-  <h1 style="display:none;">Buy Premium Vape Devices – ClassicVapes Products</h1>
+  <!-- Visible SEO heading + intro (resolves Soft 404) -->
+  <header style="text-align:center;padding:22px 14px 6px">
+    <h1 style="font-size:1.6rem;margin:0;color:var(--text)">Explore Premium Vape Devices & Flavours</h1>
+    <p style="color:var(--muted);margin-top:8px;max-width:860px;margin-left:auto;margin-right:auto;">
+      ClassicVapes offers premium disposable vapes, refill pods and curated flavour collections. Browse top-sellers, discover seasonal flavours and shop with confidence. 18+ only.
+    </p>
+  </header>
 
+  <!-- Important: brief static product list for crawlers (indexable content) -->
+  <section aria-label="Featured products for SEO" style="max-width:920px;margin:14px auto;padding:0 14px;">
+    <h2 style="font-size:1.05rem;margin:10px 0;font-weight:700;text-align:center;color:var(--text)">Popular products</h2>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:12px">
+      <!-- Static crawlable sample items — these are lightweight placeholders to prove content to Google.
+           JavaScript will replace/display real catalog dynamically in #products-grid below. -->
+      <article style="background:#fff;padding:12px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.04);">
+        <img src="images/logo.png" alt="Blueberry Ice" style="width:100%;height:140px;object-fit:cover;border-radius:10px">
+        <h3 style="font-size:15px;margin:8px 0 4px">Blueberry Ice (Disposable)</h3>
+        <p style="color:var(--muted);font-size:13px;margin:0 0 10px">Smooth blueberry flavour with a refreshing cool finish.</p>
+        <div style="display:flex;gap:8px">
+          <strong style="color:var(--accent1)">₹499</strong>
+          <a href="checkout.html" style="margin-left:auto" class="buy-btn">Buy</a>
+        </div>
+      </article>
+
+      <article style="background:#fff;padding:12px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.04);">
+        <img src="images/logo.png" alt="Mango Rush" style="width:100%;height:140px;object-fit:cover;border-radius:10px">
+        <h3 style="font-size:15px;margin:8px 0 4px">Mango Rush (Disposable)</h3>
+        <p style="color:var(--muted);font-size:13px;margin:0 0 10px">Tropical mango punch, juicy and satisfying.</p>
+        <div style="display:flex;gap:8px">
+          <strong style="color:var(--accent1)">₹499</strong>
+          <a href="checkout.html" style="margin-left:auto" class="buy-btn">Buy</a>
+        </div>
+      </article>
+
+      <article style="background:#fff;padding:12px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.04);">
+        <img src="images/logo.png" alt="Classic Cola" style="width:100%;height:140px;object-fit:cover;border-radius:10px">
+        <h3 style="font-size:15px;margin:8px 0 4px">Classic Cola (Disposable)</h3>
+        <p style="color:var(--muted);font-size:13px;margin:0 0 10px">Crisp cola notes with a sweet edge.</p>
+        <div style="display:flex;gap:8px">
+          <strong style="color:var(--accent1)">₹449</strong>
+          <a href="checkout.html" style="margin-left:auto" class="buy-btn">Buy</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Search bar -->
   <div class="search-wrap" style="padding:16px; text-align:center;">
     <input id="search-box" type="text" placeholder="Search products..."
       style="width:90%;max-width:400px;padding:12px;border-radius:8px;border:1px solid #ddd;font-size:16px;">
   </div>
 
-  <section class="products-list">
-    <div class="products-grid" id="products-grid"></div>
+  <!-- Dynamic product grid (JS will populate this for users) -->
+  <section class="products-list" aria-label="All products" style="padding:8px 14px 40px">
+    <div class="products-grid" id="products-grid" aria-live="polite" style="min-height:120px">
+      <!-- JavaScript (products.js) will inject product cards here for visitors -->
+    </div>
   </section>
+
+  <!-- noscript fallback (helps crawlers and users with JS disabled) -->
+  <noscript>
+    <section style="max-width:920px;margin:0 auto;padding:12px;">
+      <p style="color:#b33;font-weight:700;text-align:center;">
+        JavaScript is required to browse the full catalogue. Please enable JavaScript for the best experience.
+      </p>
+    </section>
+  </noscript>
 
 </main>
 
 <!-- Cart -->
-<div class="cart" id="cart">
+<div class="cart" id="cart" aria-hidden="true">
   <h3>Your Cart</h3>
   <div id="cart-items"></div>
   <p class="cart-total">Total: ₹<span id="total">0</span></p>
   <button class="checkout-btn" onclick="location.href='checkout.html'">Checkout</button>
 </div>
 
-<!-- Popup -->
+<!-- Product Popup -->
 <div id="product-popup" class="product-popup" style="display:none;">
   <div class="popup-card">
     <button id="popup-close" class="popup-close">✕</button>
